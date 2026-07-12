@@ -30,6 +30,11 @@ export default function Goals() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !target) return;
+    const targetVal = parseFloat(target);
+    if (isNaN(targetVal) || targetVal <= 0) {
+      alert("El monto de la meta debe ser mayor a 0.");
+      return;
+    }
     createGoal.mutate({ name, targetAmount: target, deadline: deadline || undefined, icon });
     setName(''); setTarget(''); setDeadline(''); setIcon('🎯');
   };
@@ -146,11 +151,20 @@ export default function Goals() {
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             const val = parseFloat(e.currentTarget.value);
-                            if (val > 0) {
-                              const newAmount = (parseFloat(g.currentAmount) + val).toString();
-                              updateProgress.mutate({ id: g.id, currentAmount: newAmount });
-                              e.currentTarget.value = '';
+                            if (isNaN(val) || val <= 0) {
+                              alert("Por favor, ingresa un monto válido mayor a 0.");
+                              return;
                             }
+                            const current = parseFloat(g.currentAmount);
+                            const target = parseFloat(g.targetAmount);
+                            const left = target - current;
+                            if (val > left) {
+                              alert(`El aporte supera el monto faltante. Lo máximo que podés aportar es $${left.toLocaleString()}.`);
+                              return;
+                            }
+                            const newAmount = (current + val).toString();
+                            updateProgress.mutate({ id: g.id, currentAmount: newAmount });
+                            e.currentTarget.value = '';
                           }
                         }} />
                       <button onClick={() => deleteGoal.mutate({ id: g.id })}

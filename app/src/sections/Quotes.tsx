@@ -67,9 +67,12 @@ export default function Quotes() {
     qs.map((text, i) => ({ id: `${type}-${i}`, text, type: type as keyof typeof statusConfig }))
   );
 
-  // 1. Simulación de ticks de mercado en vivo
+  // 1. Simulación de ticks de mercado en vivo (optimizado contra consumo en segundo plano y fugas de memoria)
   useEffect(() => {
+    if (activeTab !== 'market') return;
+
     const interval = setInterval(() => {
+      if (document.hidden) return; // Evitar consumo de CPU si la pestaña está inactiva
       setAssets(prev =>
         prev.map(asset => {
           const percentage = (Math.random() * 0.4 - 0.2) / 100; // +/- 0.2% max change
@@ -78,13 +81,13 @@ export default function Quotes() {
           return {
             ...asset,
             price: newPrice,
-            change: asset.change + changeDelta,
+            change: Number((asset.change + changeDelta).toFixed(2)),
           };
         })
       );
     }, 2500);
     return () => clearInterval(interval);
-  }, []);
+  }, [activeTab]);
 
   const handleRegenerate = () => {
     setRegenerating(true);
