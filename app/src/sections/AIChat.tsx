@@ -263,7 +263,7 @@ export default function AIChat() {
                         ? 'bg-white/[0.04] border border-white/[0.08] text-white/80'
                         : 'bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] text-white'
                     }`}>
-                      {msg.content}
+                      {formatMessageContent(msg.content)}
                     </div>
                   </motion.div>
                 ))}
@@ -318,4 +318,37 @@ export default function AIChat() {
       </div>
     </div>
   );
+}
+
+function formatMessageContent(content: string) {
+  const boldParts = content.split(/(\*\*[^*]+\*\*)/g);
+  return boldParts.map((part, idx) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return (
+        <strong key={idx} className="font-extrabold text-white">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    
+    if (part.includes('\n* ') || part.startsWith('* ') || part.includes('\n- ') || part.startsWith('- ')) {
+      const lines = part.split('\n');
+      return lines.map((line, lIdx) => {
+        let cleanLine = line;
+        if (line.trim().startsWith('* ')) {
+          cleanLine = '• ' + line.trim().slice(2);
+        } else if (line.trim().startsWith('- ')) {
+          cleanLine = '• ' + line.trim().slice(2);
+        }
+        return (
+          <span key={lIdx}>
+            {cleanLine}
+            {lIdx < lines.length - 1 && '\n'}
+          </span>
+        );
+      });
+    }
+
+    return part;
+  });
 }
