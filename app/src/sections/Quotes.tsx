@@ -366,19 +366,6 @@ export default function Quotes() {
                 </>
               )}
             </div>
-
-            {/* All Quotes list */}
-            <div className="space-y-2">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-white/40">Todas las frases del sistema</h2>
-              {allQuotes.map((q) => (
-                <div key={q.id} className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
-                  <p className="text-xs text-white/60 mb-1">{q.text}</p>
-                  <span className={`text-[9px] font-bold uppercase tracking-wider ${statusConfig[q.type].color}`}>
-                    {statusConfig[q.type].label}
-                  </span>
-                </div>
-              ))}
-            </div>
           </motion.div>
         )}
       </AnimatePresence>
