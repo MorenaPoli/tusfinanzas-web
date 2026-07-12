@@ -23,9 +23,16 @@ export default function Layout() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] flex">
+    <div className="min-h-screen bg-[#0A0A0A] flex text-white overflow-x-hidden relative">
+      {/* Ambient Animated Gradient Blobs */}
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-gradient-to-br from-[#FF2D92]/15 to-transparent blur-[120px] animate-float-slow" />
+        <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-gradient-to-br from-[#8B5CF6]/15 to-transparent blur-[120px] animate-float-slower" />
+        <div className="absolute top-[30%] right-[10%] w-[40%] h-[40%] rounded-full bg-gradient-to-br from-[#00E5FF]/10 to-transparent blur-[100px] animate-float-medium" />
+      </div>
+
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 h-screen sticky top-0 border-r border-white/[0.06] bg-[#0A0A0A]/95 backdrop-blur-xl z-50">
+      <aside className="hidden lg:flex flex-col w-64 h-screen sticky top-0 border-r border-white/[0.08] bg-[#0A0A0A]/40 backdrop-blur-2xl z-50">
         {/* Logo */}
         <div className="p-6 flex items-center gap-3">
           <img src="/logo.jpg" alt="TusFinanzas" className="w-9 h-9 rounded-lg object-cover" />
@@ -118,7 +125,7 @@ export default function Layout() {
       </main>
 
       {/* Mobile Bottom Nav */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0A0A0A]/90 backdrop-blur-2xl border-t border-white/[0.06]">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0A0A0A]/60 backdrop-blur-3xl border-t border-white/[0.08] shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
         <div className="max-w-lg mx-auto flex items-center justify-around py-2 px-2">
           {/* Inicio */}
           <button onClick={() => { setShowMobileMenu(false); navigate('/dashboard'); }} className="flex flex-col items-center gap-1 py-1 px-3 relative">
@@ -173,7 +180,7 @@ export default function Layout() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 220 }}
-              className="lg:hidden fixed bottom-0 left-0 right-0 z-50 rounded-t-[2.5rem] border-t border-white/[0.08] bg-[#0F0F0F] p-6 pb-12 shadow-[0_-8px_30px_rgba(0,0,0,0.6)]"
+              className="lg:hidden fixed bottom-0 left-0 right-0 z-50 rounded-t-[2.5rem] border-t border-white/[0.1] bg-[#0F0F0F]/80 backdrop-blur-3xl p-6 pb-12 shadow-[0_-8px_32px_rgba(0,0,0,0.8)]"
             >
               {/* Handlebar for premium feel */}
               <div className="w-12 h-1.5 rounded-full bg-white/10 mx-auto mb-6" onClick={() => setShowMobileMenu(false)} />

@@ -141,3 +141,19 @@
     print-color-adjust: exact !important;
   }
 }
+
+@keyframes float-slow {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(40px, -40px) scale(1.1); }
+  66% { transform: translate(-30px, 30px) scale(0.9); }
+}
+
+.animate-float-slow {
+  animation: float-slow 25s infinite ease-in-out;
+}
+.animate-float-slower {
+  animation: float-slow 35s infinite ease-in-out reverse;
+}
+.animate-float-medium {
+  animation: float-slow 18s infinite ease-in-out;
+}
