@@ -1,6 +1,6 @@
 import { Outlet, useLocation, useNavigate } from 'react-router'
 import { motion } from 'framer-motion'
-import { LayoutDashboard, ListPlus, Receipt, BarChart3, Sparkles, LogOut, HelpCircle, Target, Shield, LineChart } from 'lucide-react'
+import { LayoutDashboard, ListPlus, Receipt, BarChart3, Sparkles, LogOut, HelpCircle, Target, Shield, LineChart, Users } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 const NAV = [
