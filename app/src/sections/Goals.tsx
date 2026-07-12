@@ -115,8 +115,14 @@ export default function Goals() {
         ) : goals?.length === 0 ? (
           <div className="text-center py-20">
             <Target size={40} className="text-white/10 mx-auto mb-4" />
-            <p className="text-sm text-white/30 mb-2">Sin metas aun</p>
-            <p className="text-xs text-white/20">Crea tu primera meta de ahorro</p>
+            <p className="text-sm text-white/30 mb-2">Sin metas aún</p>
+            <p className="text-xs text-white/20 mb-4">Crea tu primera meta de ahorro</p>
+            <button
+              onClick={() => setShowForm(true)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] text-white text-xs font-semibold hover:opacity-90 transition-all shadow-md"
+            >
+              <Plus size={14} /> Crear mi primera meta
+            </button>
           </div>
         ) : (
           <div className="space-y-3">
