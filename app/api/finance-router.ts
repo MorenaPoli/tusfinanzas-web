@@ -465,16 +465,37 @@ Historial de conversación reciente:
 ${history.map(h => `${h.role === 'user' ? 'Usuario' : 'Asistente'}: ${h.content}`).join("\n")}
 `;
 
-          const genAI = new GoogleGenerativeAI(apiKey);
-          const model = genAI.getGenerativeModel({
-            model: "gemini-2.0-flash",
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 2048,
+          const candidateModels = ["gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-3.5-flash"];
+          let lastError = null;
+          let success = false;
+
+          for (const modelName of candidateModels) {
+            try {
+              console.log(`🤖 Trying model ${modelName} in sendMessage...`);
+              const genAI = new GoogleGenerativeAI(apiKey);
+              const model = genAI.getGenerativeModel({
+                model: modelName,
+                generationConfig: {
+                  temperature: 0.7,
+                  maxOutputTokens: 2048,
+                }
+              });
+              const result = await model.generateContent(systemPrompt + `\n\nUsuario: ${userMessage}`);
+              const text = result.response.text();
+              if (text) {
+                assistantResponse = text;
+                success = true;
+                break;
+              }
+            } catch (err: any) {
+              console.warn(`⚠️ Model ${modelName} failed:`, err.message || err);
+              lastError = err;
             }
-          });
-          const result = await model.generateContent(systemPrompt + `\n\nUsuario: ${userMessage}`);
-          assistantResponse = result.response.text() || "Lo siento, tuve un problema procesando tu consulta. Por favor intenta de nuevo.";
+          }
+
+          if (!success && lastError) {
+            throw lastError;
+          }
         } catch (err: any) {
           console.error("Gemini API call failed:", err);
           let listInfo = "";
@@ -582,10 +603,32 @@ Transacciones a clasificar:
 ${input.rows.map((r, i) => `Índice ${i}: "${r.description}" (monto: ${r.amount})`).join("\n")}
 `;
 
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-        const result = await model.generateContent(prompt);
-        let textResult = result.response.text() || "[]";
+        const candidateModels = ["gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-3.5-flash"];
+        let textResult = "[]";
+        let success = false;
+        let lastError = null;
+
+        for (const modelName of candidateModels) {
+          try {
+            console.log(`🤖 Trying model ${modelName} in classifyCsvRows...`);
+            const genAI = new GoogleGenerativeAI(apiKey);
+            const model = genAI.getGenerativeModel({ model: modelName });
+            const result = await model.generateContent(prompt);
+            const text = result.response.text();
+            if (text) {
+              textResult = text;
+              success = true;
+              break;
+            }
+          } catch (err: any) {
+            console.warn(`⚠️ CSV Model ${modelName} failed:`, err.message || err);
+            lastError = err;
+          }
+        }
+
+        if (!success && lastError) {
+          throw lastError;
+        }
         
         // Clean markdown block wrappers if present
         if (textResult.includes("```")) {
