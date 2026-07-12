@@ -58,6 +58,11 @@ export default function Transactions() {
   };
 
   const processCsvFile = (file: File) => {
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      alert("El archivo seleccionado no es un CSV válido. Por favor sube un archivo con extensión .csv.");
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = async (event) => {
       const text = event.target?.result as string;
@@ -112,6 +117,15 @@ export default function Transactions() {
                 formattedDate = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
               }
             }
+          } else if (rawDate.includes("-")) {
+            const parts = rawDate.split("-");
+            if (parts.length === 3) {
+              if (parts[2].length === 4) {
+                formattedDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+              } else if (parts[0].length === 4) {
+                formattedDate = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+              }
+            }
           } else {
             const d = new Date(rawDate);
             if (!isNaN(d.getTime())) {
@@ -159,6 +173,12 @@ export default function Transactions() {
   };
 
   const handleSaveImport = () => {
+    const invalidRows = parsedRows.filter(r => isNaN(r.amount) || r.amount <= 0 || !r.description.trim() || !r.category.trim());
+    if (invalidRows.length > 0) {
+      alert("Por favor asegúrate de que todas las filas tengan montos mayores a 0, descripciones y categorías válidas.");
+      return;
+    }
+
     const payload = parsedRows.map(r => ({
       type: r.type,
       category: r.category,
@@ -172,12 +192,19 @@ export default function Transactions() {
 
   const filtered = transactions?.filter(t => filter === 'all' || t.type === filter) || [];
 
-  // Group by month
+  // Group by month and sort chronologically (newest first)
   const grouped: Record<string, typeof filtered> = {};
   for (const t of filtered) {
     const month = getDateStr(t.date).slice(0, 7);
     if (!grouped[month]) grouped[month] = [];
     grouped[month].push(t);
+  }
+  for (const month of Object.keys(grouped)) {
+    grouped[month].sort((a, b) => {
+      const ad = a.date instanceof Date ? a.date.toISOString() : String(a.date);
+      const bd = b.date instanceof Date ? b.date.toISOString() : String(b.date);
+      return bd.localeCompare(ad);
+    });
   }
   const sortedMonths = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
 
@@ -418,7 +445,8 @@ export default function Transactions() {
                     <div className="space-y-3">
                       {parsedRows.map((row, idx) => (
                         <div key={idx} className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.04] grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
-                          <div className="md:col-span-3">
+                          <div className="md:col-span-3 flex flex-col gap-1">
+                            <span className="text-[9px] uppercase tracking-wider text-white/30 md:hidden font-bold">Fecha</span>
                             <input
                               type="date"
                               value={row.date}
@@ -430,7 +458,8 @@ export default function Transactions() {
                               className="w-full bg-[#1A1A1A] border border-white/[0.08] px-2 py-1.5 rounded-lg text-[11px] text-white/80 focus:outline-none"
                             />
                           </div>
-                          <div className="md:col-span-3">
+                          <div className="md:col-span-3 flex flex-col gap-1">
+                            <span className="text-[9px] uppercase tracking-wider text-white/30 md:hidden font-bold">Detalle</span>
                             <input
                               type="text"
                               value={row.description}
@@ -442,7 +471,8 @@ export default function Transactions() {
                               className="w-full bg-[#1A1A1A] border border-white/[0.08] px-2 py-1.5 rounded-lg text-[11px] text-white/80 focus:outline-none truncate"
                             />
                           </div>
-                          <div className="md:col-span-2">
+                          <div className="md:col-span-2 flex flex-col gap-1">
+                            <span className="text-[9px] uppercase tracking-wider text-white/30 md:hidden font-bold">Monto</span>
                             <input
                               type="number"
                               value={row.amount}
@@ -454,7 +484,8 @@ export default function Transactions() {
                               className="w-full bg-[#1A1A1A] border border-white/[0.08] px-2 py-1.5 rounded-lg text-[11px] text-white font-bold focus:outline-none"
                             />
                           </div>
-                          <div className="md:col-span-2">
+                          <div className="md:col-span-2 flex flex-col gap-1">
+                            <span className="text-[9px] uppercase tracking-wider text-white/30 md:hidden font-bold">Tipo</span>
                             <select
                               value={row.type}
                               onChange={(e) => {
@@ -471,7 +502,8 @@ export default function Transactions() {
                               <option value="asset">Bien/Activo</option>
                             </select>
                           </div>
-                          <div className="md:col-span-2">
+                          <div className="md:col-span-2 flex flex-col gap-1">
+                            <span className="text-[9px] uppercase tracking-wider text-white/30 md:hidden font-bold">Categoría</span>
                             <input
                               type="text"
                               value={row.category}
