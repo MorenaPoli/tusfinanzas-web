@@ -1,6 +1,7 @@
+import { useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
-import { motion } from 'framer-motion'
-import { LayoutDashboard, ListPlus, Receipt, BarChart3, Sparkles, LogOut, HelpCircle, Target, Shield, LineChart, Users } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { LayoutDashboard, ListPlus, Receipt, BarChart3, Sparkles, LogOut, HelpCircle, Target, Shield, LineChart, Users, Menu, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 const NAV = [
@@ -17,6 +18,7 @@ export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -117,30 +119,125 @@ export default function Layout() {
 
       {/* Mobile Bottom Nav */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0A0A0A]/90 backdrop-blur-2xl border-t border-white/[0.06]">
-        <div className="max-w-lg mx-auto flex items-center justify-around py-2 px-4">
-          {NAV.map((item) => {
-            const active = isActive(item.path);
-            const Icon = item.icon;
+        <div className="max-w-lg mx-auto flex items-center justify-around py-2 px-2">
+          {/* Inicio */}
+          <button onClick={() => { setShowMobileMenu(false); navigate('/dashboard'); }} className="flex flex-col items-center gap-1 py-1 px-3 relative">
+            <LayoutDashboard size={20} className={isActive('/dashboard') ? 'text-[#FF2D92]' : 'text-white/30'} />
+            <span className={`text-[10px] ${isActive('/dashboard') ? 'text-[#FF2D92] font-medium' : 'text-white/30'}`}>Inicio</span>
+            {isActive('/dashboard') && <motion.div layoutId="nav-indicator" className="absolute -top-2 w-6 h-0.5 bg-[#FF2D92] rounded-full" />}
+          </button>
 
-            if (item.isCenter) {
-              return (
-                <motion.button key={item.path} whileTap={{ scale: 0.9 }} onClick={() => navigate(item.path)}
-                  className="relative -mt-6 w-14 h-14 rounded-full bg-gradient-to-r from-[#FF2D92] via-[#8B5CF6] to-[#6366F1] flex items-center justify-center shadow-[0_4px_20px_rgba(255,45,146,0.4)]">
-                  <Icon size={24} className="text-white" />
-                </motion.button>
-              );
-            }
+          {/* Movimientos */}
+          <button onClick={() => { setShowMobileMenu(false); navigate('/transactions'); }} className="flex flex-col items-center gap-1 py-1 px-3 relative">
+            <Receipt size={20} className={isActive('/transactions') ? 'text-[#FF2D92]' : 'text-white/30'} />
+            <span className={`text-[10px] ${isActive('/transactions') ? 'text-[#FF2D92] font-medium' : 'text-white/30'}`}>Movimientos</span>
+            {isActive('/transactions') && <motion.div layoutId="nav-indicator" className="absolute -top-2 w-6 h-0.5 bg-[#FF2D92] rounded-full" />}
+          </button>
 
-            return (
-              <button key={item.path} onClick={() => navigate(item.path)} className="flex flex-col items-center gap-1 py-1 px-3 relative">
-                <Icon size={20} className={active ? 'text-[#FF2D92]' : 'text-white/30'} />
-                <span className={`text-[10px] ${active ? 'text-[#FF2D92] font-medium' : 'text-white/30'}`}>{item.label}</span>
-                {active && <motion.div layoutId="nav-indicator" className="absolute -top-2 w-6 h-0.5 bg-[#FF2D92] rounded-full" />}
-              </button>
-            );
-          })}
+          {/* Agregar (Center Button) */}
+          <motion.button whileTap={{ scale: 0.9 }} onClick={() => { setShowMobileMenu(false); navigate('/add'); }}
+            className="relative -mt-6 w-14 h-14 rounded-full bg-gradient-to-r from-[#FF2D92] via-[#8B5CF6] to-[#6366F1] flex items-center justify-center shadow-[0_4px_20px_rgba(255,45,146,0.4)]">
+            <ListPlus size={24} className="text-white" />
+          </motion.button>
+
+          {/* Experto */}
+          <button onClick={() => { setShowMobileMenu(false); navigate('/chat'); }} className="flex flex-col items-center gap-1 py-1 px-3 relative">
+            <Sparkles size={20} className={isActive('/chat') ? 'text-[#FF2D92]' : 'text-white/30'} />
+            <span className={`text-[10px] ${isActive('/chat') ? 'text-[#FF2D92] font-medium' : 'text-white/30'}`}>Experto</span>
+            {isActive('/chat') && <motion.div layoutId="nav-indicator" className="absolute -top-2 w-6 h-0.5 bg-[#FF2D92] rounded-full" />}
+          </button>
+
+          {/* Más Menu Toggle */}
+          <button onClick={() => setShowMobileMenu(prev => !prev)} className="flex flex-col items-center gap-1 py-1 px-3 relative">
+            <Menu size={20} className={showMobileMenu ? 'text-[#FF2D92]' : 'text-white/30'} />
+            <span className={`text-[10px] ${showMobileMenu ? 'text-[#FF2D92] font-medium' : 'text-white/30'}`}>Más</span>
+          </button>
         </div>
       </nav>
+
+      {/* Mobile Slide-Up Drawer Menu Overlay */}
+      <AnimatePresence>
+        {showMobileMenu && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowMobileMenu(false)}
+              className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-xs"
+            />
+            {/* Drawer */}
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 220 }}
+              className="lg:hidden fixed bottom-0 left-0 right-0 z-50 rounded-t-[2.5rem] border-t border-white/[0.08] bg-[#0F0F0F] p-6 pb-12 shadow-[0_-8px_30px_rgba(0,0,0,0.6)]"
+            >
+              {/* Handlebar for premium feel */}
+              <div className="w-12 h-1.5 rounded-full bg-white/10 mx-auto mb-6" onClick={() => setShowMobileMenu(false)} />
+
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="font-bold text-lg text-white">Menú</h3>
+                  <p className="text-xs text-white/40">Más secciones de finanzas</p>
+                </div>
+                <button
+                  onClick={() => setShowMobileMenu(false)}
+                  className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/60 hover:text-white"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Grid of Sections */}
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                {[
+                  { path: '/summary', label: 'Resumen', icon: BarChart3, color: 'text-[#00E5FF]', bg: 'bg-[#00E5FF]/10' },
+                  { path: '/goals', label: 'Metas', icon: Target, color: 'text-[#FFD166]', bg: 'bg-[#FFD166]/10' },
+                  { path: '/quotes', label: 'Inversiones', icon: LineChart, color: 'text-[#8B5CF6]', bg: 'bg-[#8B5CF6]/10' },
+                  { path: '/family', label: 'Mi Familia', icon: Users, color: 'text-[#10B981]', bg: 'bg-[#10B981]/10' },
+                  { path: '/support', label: 'Soporte', icon: HelpCircle, color: 'text-[#FF2D92]', bg: 'bg-[#FF2D92]/10' },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  const active = isActive(item.path);
+                  return (
+                    <button
+                      key={item.path}
+                      onClick={() => {
+                        setShowMobileMenu(false);
+                        navigate(item.path);
+                      }}
+                      className={`flex flex-col items-center gap-2 p-4 rounded-2xl border text-center transition-all ${
+                        active
+                          ? 'bg-white/[0.06] border-white/20 text-white'
+                          : 'bg-white/[0.02] border-white/[0.04] text-white/60 hover:bg-white/[0.04]'
+                      }`}
+                    >
+                      <div className={`w-10 h-10 rounded-xl ${item.bg} flex items-center justify-center`}>
+                        <Icon size={20} className={item.color} />
+                      </div>
+                      <span className="text-xs font-medium">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Logout Button inside drawer */}
+              <button
+                onClick={() => {
+                  setShowMobileMenu(false);
+                  logout();
+                }}
+                className="w-full py-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 font-semibold text-sm flex items-center justify-center gap-2 hover:bg-red-500/20 transition-all"
+              >
+                <LogOut size={16} /> Cerrar Sesión
+              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

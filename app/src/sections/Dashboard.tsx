@@ -130,7 +130,7 @@ export default function Dashboard() {
               <motion.div
                 className={`h-full rounded-full ${atLimit ? 'bg-[#FF4D6A]' : nearLimit ? 'bg-[#FFD166]' : 'bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6]'}`}
                 initial={{ width: 0 }}
-                animate={{ width: `${txPercent}%` }}
+                animate={{ width: `${Math.min(100, txPercent)}%` }}
                 transition={{ duration: 0.8 }}
               />
             </div>
