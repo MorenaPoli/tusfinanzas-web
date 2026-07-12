@@ -24,15 +24,20 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen flex text-white overflow-x-hidden relative">
-      {/* Ambient Animated Gradient Blobs */}
-      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-gradient-to-br from-[#FF2D92]/15 to-transparent blur-[120px] animate-float-slow" />
-        <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-gradient-to-br from-[#8B5CF6]/15 to-transparent blur-[120px] animate-float-slower" />
-        <div className="absolute top-[30%] right-[10%] w-[40%] h-[40%] rounded-full bg-gradient-to-br from-[#00E5FF]/10 to-transparent blur-[100px] animate-float-medium" />
+      {/* Ambient Aurora Background */}
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none" style={{ background: '#080810' }}>
+        <div className="absolute top-[-15%] left-[-15%] w-[55%] h-[55%] rounded-full animate-float-slow"
+          style={{ background: 'radial-gradient(ellipse, rgba(255,45,146,0.25) 0%, transparent 70%)', filter: 'blur(60px)' }} />
+        <div className="absolute bottom-[-15%] right-[-15%] w-[60%] h-[60%] rounded-full animate-float-slower"
+          style={{ background: 'radial-gradient(ellipse, rgba(139,92,246,0.22) 0%, transparent 70%)', filter: 'blur(60px)' }} />
+        <div className="absolute top-[35%] right-[5%] w-[40%] h-[40%] rounded-full animate-float-medium"
+          style={{ background: 'radial-gradient(ellipse, rgba(0,229,255,0.14) 0%, transparent 70%)', filter: 'blur(60px)' }} />
+        <div className="absolute top-[60%] left-[20%] w-[30%] h-[30%] rounded-full animate-float-slow"
+          style={{ background: 'radial-gradient(ellipse, rgba(99,102,241,0.12) 0%, transparent 70%)', filter: 'blur(50px)' }} />
       </div>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 h-screen sticky top-0 border-r border-white/[0.08] bg-[#0A0A0A]/40 backdrop-blur-2xl z-50">
+      <aside className="hidden lg:flex flex-col w-64 h-screen sticky top-0 z-50 glass-strong border-r border-white/[0.06]">
         {/* Logo */}
         <div className="p-6 flex items-center gap-3">
           <img src="/logo.jpg" alt="TusFinanzas" className="w-9 h-9 rounded-lg object-cover" />

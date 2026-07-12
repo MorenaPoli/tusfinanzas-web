@@ -114,10 +114,10 @@ export default function Checkout() {
                 onClick={() => setSelectedPlan(key)}
                 className={`p-5 rounded-2xl border transition-all text-left ${
                   active
-                    ? `bg-gradient-to-b ${p.gradient}`
-                    : 'bg-[#111] border-white/[0.06] hover:border-white/[0.1]'
+                    ? 'glass-strong'
+                    : 'glass-card hover:border-white/[0.12]'
                 }`}
-                style={active ? { borderColor: `${p.color}40`, boxShadow: `0 0 30px ${p.color}20` } : undefined}
+                style={active ? { borderColor: `${p.color}50`, boxShadow: `0 0 30px ${p.color}22, inset 0 1px 0 rgba(255,255,255,0.10)` } : undefined}
               >
                 <div className="flex items-center gap-2 mb-2">
                   <Icon size={20} style={{ color: active ? p.color : '#666' }} />
@@ -130,7 +130,7 @@ export default function Checkout() {
         </div>
 
         {/* Billing Toggle */}
-        <div className="flex items-center gap-2 p-1 rounded-xl bg-[#1A1A1A] border border-white/[0.06] mb-6">
+        <div className="flex items-center gap-2 p-1 rounded-xl glass mb-6">
           <button
             onClick={() => setBilling('monthly')}
             className={`flex-1 py-2.5 rounded-lg text-xs font-semibold transition-all ${
@@ -158,7 +158,8 @@ export default function Checkout() {
           key={`${selectedPlan}-${billing}`}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="p-6 rounded-2xl bg-gradient-to-b from-[#1A1A1A] to-[#111] border border-white/[0.08] mb-6 text-center"
+          className="p-6 rounded-2xl glass-strong mb-6 text-center"
+          style={{ boxShadow: `0 0 40px ${plan.color}15, inset 0 1px 0 rgba(255,255,255,0.10)` }}
         >
           <div className="flex items-baseline justify-center gap-1 mb-2">
             <span className="text-5xl font-extrabold bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] bg-clip-text text-transparent">
@@ -174,8 +175,8 @@ export default function Checkout() {
         </motion.div>
 
         {/* Features */}
-        <div className="p-5 rounded-2xl bg-[#111] border border-white/[0.06] mb-6">
-          <p className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-4">Que incluye</p>
+        <div className="p-5 rounded-2xl glass-card mb-6">
+          <p className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-4">Qué incluye</p>
           <div className="space-y-3">
             {plan.features.map((f, i) => (
               <motion.div
