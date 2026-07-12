@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Trash2, Filter, X, Download, UploadCloud, Sparkles } from 'lucide-react'
+import { ArrowLeft, Trash2, Filter, X, Download, UploadCloud, Sparkles, Plus } from 'lucide-react'
 import { trpc } from '@/providers/trpc'
 import type { TransactionType } from '@/types'
 import { useSubscription } from '@/hooks/useSubscription'
@@ -284,7 +284,13 @@ export default function Transactions() {
         </div>
       ) : sortedMonths.length === 0 ? (
         <div className="text-center py-20">
-          <p className="text-sm text-white/30">Sin movimientos</p>
+          <p className="text-sm text-white/30 mb-4">Sin movimientos aún</p>
+          <button
+            onClick={() => navigate('/add')}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] text-white text-xs font-semibold hover:opacity-90 transition-all shadow-md"
+          >
+            <Plus size={14} /> Agregar mi primer movimiento
+          </button>
         </div>
       ) : (
         <div className="space-y-6">

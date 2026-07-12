@@ -141,7 +141,13 @@ export default function Support() {
         ) : !tickets || tickets.length === 0 ? (
           <div className="p-6 rounded-2xl bg-[#1A1A1A] border border-white/[0.04] text-center">
             <Ticket size={24} className="text-white/10 mx-auto mb-2" />
-            <p className="text-xs text-white/30">No tenés tickets activos.</p>
+            <p className="text-xs text-white/30 mb-3">No tenés tickets activos.</p>
+            <button
+              onClick={() => setShowForm(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FF2D92]/10 border border-[#FF2D92]/20 text-[10px] text-[#FF2D92] hover:bg-[#FF2D92]/20 transition-colors"
+            >
+              <Plus size={12} /> Crear mi primer ticket
+            </button>
           </div>
         ) : (
           <div className="space-y-3">
