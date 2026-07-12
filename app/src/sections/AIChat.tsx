@@ -134,7 +134,8 @@ export default function AIChat() {
 
   const todayUserMessages = messages.filter(m => m.role === 'user').length;
   const freeChatLimit = 100;
-  const freeChatBlocked = isFree && todayUserMessages >= freeChatLimit;
+  const freeChatRemaining = Math.max(0, freeChatLimit - todayUserMessages);
+  const freeChatBlocked = isFree && freeChatRemaining <= 0;
 
   useEffect(() => {
     if (dbMessages) setMessages(dbMessages.map(m => ({ id: m.id, role: m.role, content: m.content })));
