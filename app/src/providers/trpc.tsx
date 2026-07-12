@@ -14,7 +14,7 @@ const trpcClient = trpc.createClient({
       url: "/api/trpc",
       transformer: superjson,
       headers() {
-        const token = localStorage.getItem('tusfinanzas_auth_token');
+        const token = localStorage.getItem('iafinanzas_auth_token');
         return token ? { 'x-local-auth-token': token } : {};
       },
       fetch(input, init) {

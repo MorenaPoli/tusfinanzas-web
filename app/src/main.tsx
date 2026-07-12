@@ -5,8 +5,8 @@ import './index.css'
 import { TRPCProvider } from "@/providers/trpc"
 import App from './App.tsx'
 
-// TusFinanzas v2 - force cache invalidation
-console.log('[TusFinanzas] v2 initialized')
+// IAfinanzas v2 - force cache invalidation
+console.log('[IAfinanzas] v2 initialized')
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

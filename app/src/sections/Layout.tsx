@@ -40,8 +40,8 @@ export default function Layout() {
       <aside className="hidden lg:flex flex-col w-64 h-screen sticky top-0 z-50 glass-strong border-r border-white/[0.06]">
         {/* Logo */}
         <div className="p-6 flex items-center gap-3">
-          <img src="/logo.jpg" alt="TusFinanzas" className="w-9 h-9 rounded-lg object-cover" />
-          <span className="font-bold text-lg tracking-tight">TusFinanzas</span>
+          <img src="/logo.jpg" alt="IAfinanzas" className="w-9 h-9 rounded-lg object-cover" />
+          <span className="font-bold text-lg tracking-tight">IAfinanzas</span>
         </div>
 
         {/* User */}

@@ -69,9 +69,9 @@ export default function AuthPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
-          <img src="/logo.jpg" alt="TusFinanzas" className="w-16 h-16 rounded-2xl mx-auto mb-4 object-cover shadow-[0_0_30px_rgba(255,45,146,0.3)]" />
+          <img src="/logo.jpg" alt="IAfinanzas" className="w-16 h-16 rounded-2xl mx-auto mb-4 object-cover shadow-[0_0_30px_rgba(255,45,146,0.3)]" />
           <h1 className="text-2xl font-bold bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] bg-clip-text text-transparent">
-            TusFinanzas
+            IAfinanzas
           </h1>
           <p className="text-sm text-white/40 mt-1">
             {isLogin ? 'Inicia sesion en tu cuenta' : 'Crea tu cuenta gratis'}

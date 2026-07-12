@@ -5,55 +5,64 @@ import { getDb } from "./queries/connection";
 import { subscriptions } from "@db/schema";
 import { eq } from "drizzle-orm";
 
-import { MercadoPagoConfig, Preference, Payment } from "mercadopago";
+import { MercadoPagoConfig, PreApproval, Payment } from "mercadopago";
 
 // ─── Lazy init de MercadoPago ───
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-let _pref: any = null;
+let _preapproval: any = null;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let _pay: any = null;
 
-function getPref() {
-  if (_pref) return _pref;
+function getMPConfig() {
   const token = process.env.MERCADOPAGO_ACCESS_TOKEN;
   if (!token) {
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
-      message: "MercadoPago no configurado. Agrega MERCADOPAGO_ACCESS_TOKEN al .env",
+      message: "MercadoPago no configurado. Agrega MERCADOPAGO_ACCESS_TOKEN al .env o en Render.",
     });
   }
-  const config = new MercadoPagoConfig({ accessToken: token });
-  _pref = new Preference(config);
-  return _pref;
+  return new MercadoPagoConfig({ accessToken: token });
+}
+
+function getPreApproval() {
+  if (_preapproval) return _preapproval;
+  _preapproval = new PreApproval(getMPConfig());
+  return _preapproval;
 }
 
 function getPay() {
   if (_pay) return _pay;
-  const token = process.env.MERCADOPAGO_ACCESS_TOKEN;
-  if (!token) throw new Error("MP not configured");
-  const config = new MercadoPagoConfig({ accessToken: token });
-  _pay = new Payment(config);
+  _pay = new Payment(getMPConfig());
   return _pay;
 }
 
 // ─── Plan pricing ───
+// Nota: MercadoPago Argentina maneja USD nativo con el campo currency_id: "USD"
+// Para ARS habría que ajustar los precios al tipo de cambio del día
 const PLANS = {
   pro: {
     monthly: 4.99,
     yearly: 39.99,
-    title: "TusFinanzas Pro",
-    desc: "Transacciones ilimitadas, Experto IA ilimitado, graficos avanzados, exportar CSV/Excel",
+    title: "IAfinanzas Pro",
+    desc: "Transacciones ilimitadas, Experto IA ilimitado, gráficos avanzados, exportar CSV/Excel",
   },
   family: {
     monthly: 8.99,
     yearly: 69.99,
-    title: "TusFinanzas Familiar",
-    desc: "Todo lo de Pro + hasta 5 familiares, categorias compartidas, metas familiares",
+    title: "IAfinanzas Familiar",
+    desc: "Todo lo de Pro + hasta 5 familiares, presupuesto compartido, metas familiares",
   },
 };
 
-// ─── Helper: crear preferencia ───
-async function createPref(
+// ─── Helper: frecuencia de cobro ───
+// La API de Suscripciones de MP usa "frequency" + "frequency_type"
+function getBillingFrequency(billing: "monthly" | "yearly") {
+  if (billing === "monthly") return { frequency: 1, frequency_type: "months" as const };
+  return { frequency: 12, frequency_type: "months" as const };
+}
+
+// ─── Helper: crear suscripción recurrente (Preapproval) ───
+async function createSubscription(
   userId: number,
   email: string,
   name: string,
@@ -62,52 +71,56 @@ async function createPref(
 ) {
   const cfg = PLANS[plan];
   const amount = billing === "monthly" ? cfg.monthly : cfg.yearly;
-  const period = billing === "monthly" ? "mes" : "ano";
+  const { frequency, frequency_type } = getBillingFrequency(billing);
+  const origin = process.env.APP_URL || "https://iafinanzas.app";
 
-  const origin = process.env.APP_URL || "https://tusfinanzas.app";
-
-  const body = {
-    items: [
-      {
-        id: `${plan}-${billing}`,
-        title: `${cfg.title} (${period})`,
-        description: cfg.desc,
-        quantity: 1,
+  const pa = getPreApproval();
+  const resp = await pa.create({
+    body: {
+      // Información del plan
+      reason: cfg.title,
+      // Referencia externa para identificar userId:plan:billing al recibir webhook
+      external_reference: `${userId}:${plan}:${billing}`,
+      // URL a donde MP redirige al usuario tras autorizar el débito
+      back_url: `${origin}/payment/success`,
+      // Datos del pagador
+      payer_email: email || `usuario${userId}@iafinanzas.app`,
+      // Configuración del cobro automático recurrente
+      auto_recurring: {
+        frequency,
+        frequency_type,
+        // transaction_amount es el monto que se cobra en cada ciclo
+        transaction_amount: amount,
+        // currency_id en MP Argentina para cobros internacionales en USD
         currency_id: "USD",
-        unit_price: amount,
-        category_id: "software",
+        // start_date: primera fecha de cobro (inmediata)
+        start_date: new Date().toISOString(),
+        // end_date: sin fin (suscripción indefinida, el usuario puede cancelar)
+        // Si querés yearly fijo, descomenta:
+        // end_date: new Date(Date.now() + 366 * 24 * 60 * 60 * 1000).toISOString(),
       },
-    ],
-    payer: { name: name || "Usuario", email: email || "usuario@tusfinanzas.app" },
-    external_reference: `${userId}:${plan}:${billing}`,
-    back_urls: {
-      success: `${origin}/payment/success`,
-      failure: `${origin}/payment/failure`,
-      pending: `${origin}/payment/pending`,
+      // URL de notificación de cada cobro recurrente
+      notification_url: `${origin}/api/trpc/mercadopago.webhook`,
     },
-    auto_return: "approved" as const,
-    notification_url: `${origin}/api/trpc/mercadopago.webhook`,
-  };
-
-  const pref = getPref();
-  const resp = await pref.create({ body });
+  });
 
   return {
-    preferenceId: resp.id,
+    subscriptionId: resp.id,
+    // init_point es la URL donde el usuario autoriza el débito automático
     initPoint: resp.init_point,
-    sandboxInitPoint: resp.sandbox_init_point,
+    status: resp.status,
   };
 }
 
-// ─── Helper: activar plan tras pago ───
-async function activatePlan(externalRef: string) {
+// ─── Helper: activar/renovar plan tras autorización o cobro ───
+async function activatePlan(externalRef: string, months?: number) {
   const [userIdStr, plan, billing] = externalRef.split(":");
   const userId = Number(userIdStr);
   if (!userId || !plan) return;
 
   const db = getDb();
-  const months = billing === "yearly" ? 12 : 1;
-  const expiresAt = new Date(Date.now() + months * 30 * 24 * 60 * 60 * 1000);
+  const m = months ?? (billing === "yearly" ? 12 : 1);
+  const expiresAt = new Date(Date.now() + m * 30 * 24 * 60 * 60 * 1000);
 
   const existing = await db
     .select()
@@ -131,14 +144,23 @@ async function activatePlan(externalRef: string) {
 
 // ─── Router ───
 export const mercadoPagoRouter = createRouter({
-  // Crear preferencia de pago y devolver URL
+  // Crear suscripción recurrente y devolver URL de autorización
   createPreference: authedQuery
     .input(z.object({ plan: z.enum(["pro", "family"]), billing: z.enum(["monthly", "yearly"]) }))
     .mutation(async ({ ctx, input }) => {
-      return createPref(ctx.user.id, ctx.user.email || "", ctx.user.name || "", input.plan, input.billing);
+      return createSubscription(
+        ctx.user.id,
+        ctx.user.email || "",
+        ctx.user.name || "",
+        input.plan,
+        input.billing
+      );
     }),
 
-  // Webhook para notificaciones de MP
+  // Webhook para notificaciones de MP (pagos recurrentes + cambios de estado)
+  // MP envía dos tipos principales:
+  //   topic=payment  → un cobro puntual se procesó
+  //   topic=preapproval → cambio de estado de la suscripción (authorized, paused, cancelled)
   webhook: publicQuery
     .input(
       z.object({
@@ -149,19 +171,32 @@ export const mercadoPagoRouter = createRouter({
       }).optional()
     )
     .mutation(async ({ input }) => {
-      const paymentId = input?.["data.id"] || input?.id;
       const topic = input?.topic || input?.type;
+      const resourceId = input?.["data.id"] || input?.id;
 
-      if (!paymentId || topic !== "payment") {
-        return { received: true };
-      }
+      if (!resourceId) return { received: true };
 
       try {
-        const pay = getPay();
-        const data = await pay.get({ id: Number(paymentId) });
-
-        if (data.status === "approved" && data.external_reference) {
-          await activatePlan(data.external_reference);
+        if (topic === "payment") {
+          // Un cobro recurrente fue procesado
+          const pay = getPay();
+          const data = await pay.get({ id: Number(resourceId) });
+          if (data.status === "approved" && data.external_reference) {
+            await activatePlan(data.external_reference);
+          }
+        } else if (topic === "preapproval") {
+          // Cambio de estado en la suscripción (ej: usuario autorizó por primera vez)
+          const pa = getPreApproval();
+          const sub = await pa.get({ id: resourceId });
+          if (
+            (sub.status === "authorized" || sub.status === "active") &&
+            sub.external_reference
+          ) {
+            // Activar plan inmediatamente al autorizar
+            await activatePlan(sub.external_reference);
+          }
+          // Si status === "cancelled" o "paused", podrías desactivar el plan aquí
+          // Por ahora lo dejamos expirar naturalmente por fecha
         }
       } catch (err) {
         console.error("MP webhook error:", err);

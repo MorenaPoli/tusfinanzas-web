@@ -7,7 +7,7 @@ import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || "tusfinanzas-secret-key-2026";
+const JWT_SECRET = process.env.JWT_SECRET || "iafinanzas-secret-key-2026";
 
 function signToken(userId: number, email: string, role: string): string {
   return jwt.sign({ userId, email, role, type: "local" }, JWT_SECRET, { expiresIn: "30d" });

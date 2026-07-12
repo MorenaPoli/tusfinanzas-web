@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { trpc } from '@/providers/trpc';
 
-const LOCAL_TOKEN_KEY = 'tusfinanzas_auth_token';
+const LOCAL_TOKEN_KEY = 'iafinanzas_auth_token';
 
 export function useAuth(_opts?: { redirectOnUnauthenticated?: boolean }) {
   const utils = trpc.useUtils();

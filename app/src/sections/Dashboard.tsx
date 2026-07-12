@@ -15,7 +15,7 @@ export default function Dashboard() {
   const { plan, isFree, nearLimit, atLimit, txCount, txLimit, txPercent } = useSubscription();
   const utils = trpc.useUtils();
 
-  const [currency, setCurrency] = useState<string>(() => localStorage.getItem('tusfinanzas_currency') || 'USD');
+  const [currency, setCurrency] = useState<string>(() => localStorage.getItem('iafinanzas_currency') || 'USD');
 
   const { data: totals } = trpc.finance.getTotals.useQuery({ currency });
   const { data: transactions } = trpc.finance.listTransactions.useQuery();
@@ -62,8 +62,8 @@ export default function Dashboard() {
       {/* Header - mobile only */}
       <div className="lg:hidden flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <img src="/logo.jpg" alt="TusFinanzas" className="w-9 h-9 rounded-lg object-cover" />
-          <span className="font-bold text-lg tracking-tight">TusFinanzas</span>
+          <img src="/logo.jpg" alt="IAfinanzas" className="w-9 h-9 rounded-lg object-cover" />
+          <span className="font-bold text-lg tracking-tight">IAfinanzas</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-white/40 hidden sm:inline">{user?.name || 'Usuario'}</span>
@@ -99,7 +99,7 @@ export default function Dashboard() {
               key={curr}
               onClick={() => {
                 setCurrency(curr);
-                localStorage.setItem('tusfinanzas_currency', curr);
+                localStorage.setItem('iafinanzas_currency', curr);
                 utils.finance.getTotals.invalidate();
               }}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${

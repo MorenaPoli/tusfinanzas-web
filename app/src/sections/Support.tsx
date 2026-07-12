@@ -38,8 +38,8 @@ export default function Support() {
 
   const faqs = [
     {
-      q: 'Cuanto cuesta TusFinanzas?',
-      a: 'TusFinanzas es gratis para empezar. El plan Pro cuesta $4.99/mes o $39.99/ano (33% de descuento). El plan Familiar cuesta $8.99/mes o $69.99/ano.',
+      q: 'Cuanto cuesta IAfinanzas?',
+      a: 'IAfinanzas es gratis para empezar. El plan Pro cuesta $4.99/mes o $39.99/ano (33% de descuento). El plan Familiar cuesta $8.99/mes o $69.99/ano.',
     },
     {
       q: 'Puedo cambiar de plan en cualquier momento?',
@@ -88,7 +88,7 @@ export default function Support() {
           className="p-5 rounded-2xl bg-[#1A1A1A] border border-white/[0.06]">
           <Mail size={24} className="text-[#8B5CF6] mb-3" />
           <h3 className="font-semibold text-sm mb-1">Email</h3>
-          <p className="text-xs text-white/40 mb-3">soporte@tusfinanzas.app</p>
+          <p className="text-xs text-white/40 mb-3">soporte@iafinanzas.app</p>
           <span className="text-xs text-white/20">Respondemos en 24-48hs</span>
         </motion.div>
       </div>
