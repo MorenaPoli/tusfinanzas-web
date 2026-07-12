@@ -26,6 +26,7 @@ export function getDb() {
 
     instance = drizzle(pool, {
       schema: fullSchema,
+      mode: "default",
     });
   }
   return instance;
