@@ -3,6 +3,7 @@ import { createRouter, authedQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import { transactions, dailyQuotes, chatMessages, subscriptions, savingsGoals, familyMemberships } from "@db/schema";
 import { eq, and, desc, sql, inArray } from "drizzle-orm";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 let cachedRates: Record<string, number> | null = null;
 let lastRatesFetchTime = 0;
@@ -464,33 +465,16 @@ Historial de conversación reciente:
 ${history.map(h => `${h.role === 'user' ? 'Usuario' : 'Asistente'}: ${h.content}`).join("\n")}
 `;
 
-          const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                contents: [
-                  {
-                    role: "user",
-                    parts: [{ text: systemPrompt + `\n\nUsuario: ${userMessage}` }],
-                  },
-                ],
-                generationConfig: {
-                  temperature: 0.7,
-                  maxOutputTokens: 2048,
-                },
-              }),
+          const genAI = new GoogleGenerativeAI(apiKey);
+          const model = genAI.getGenerativeModel({
+            model: "gemini-1.5-flash",
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 2048,
             }
-          );
-
-          if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(`Gemini API error: ${response.status} - ${errText}`);
-          }
-
-          const data = await response.json();
-          assistantResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || "Lo siento, tuve un problema procesando tu consulta. Por favor intenta de nuevo.";
+          });
+          const result = await model.generateContent(systemPrompt + `\n\nUsuario: ${userMessage}`);
+          assistantResponse = result.response.text() || "Lo siento, tuve un problema procesando tu consulta. Por favor intenta de nuevo.";
         } catch (err: any) {
           console.error("Gemini API call failed:", err);
           assistantResponse = `Lo siento, hubo un error de comunicación con el servicio de IA de Gemini. Detalle del error: ${err.message || err}. Por favor asegúrate de que tu GEMINI_API_KEY en Render sea correcta.`;
@@ -584,23 +568,10 @@ Transacciones a clasificar:
 ${input.rows.map((r, i) => `Índice ${i}: "${r.description}" (monto: ${r.amount})`).join("\n")}
 `;
 
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ role: "user", parts: [{ text: prompt }] }],
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`Gemini API error status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        let textResult = data.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const result = await model.generateContent(prompt);
+        let textResult = result.response.text() || "[]";
         
         // Clean markdown block wrappers if present
         if (textResult.includes("```")) {
