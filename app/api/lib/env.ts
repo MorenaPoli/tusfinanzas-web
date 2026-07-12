@@ -13,11 +13,6 @@ function optional(name: string): string | undefined {
 }
 
 export const env = {
-  appId: required("APP_ID"),
-  appSecret: required("APP_SECRET"),
-  kimiAuthUrl: required("VITE_KIMI_AUTH_URL"),
-  kimiOpenUrl: optional("VITE_KIMI_OPEN_URL") || required("VITE_KIMI_AUTH_URL"),
   isProduction: process.env.NODE_ENV === "production",
   databaseUrl: required("DATABASE_URL"),
-  ownerUnionId: optional("OWNER_UNION_ID"),
 };
