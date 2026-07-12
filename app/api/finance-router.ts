@@ -467,7 +467,7 @@ ${history.map(h => `${h.role === 'user' ? 'Usuario' : 'Asistente'}: ${h.content}
 
           const genAI = new GoogleGenerativeAI(apiKey);
           const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash",
+            model: "gemini-2.0-flash",
             generationConfig: {
               temperature: 0.7,
               maxOutputTokens: 2048,
@@ -583,7 +583,7 @@ ${input.rows.map((r, i) => `Índice ${i}: "${r.description}" (monto: ${r.amount}
 `;
 
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
         const result = await model.generateContent(prompt);
         let textResult = result.response.text() || "[]";
         
