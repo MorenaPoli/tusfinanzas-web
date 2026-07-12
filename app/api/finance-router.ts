@@ -491,9 +491,9 @@ ${history.map(h => `${h.role === 'user' ? 'Usuario' : 'Asistente'}: ${h.content}
 
           const data = await response.json();
           assistantResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || "Lo siento, tuve un problema procesando tu consulta. Por favor intenta de nuevo.";
-        } catch (err) {
+        } catch (err: any) {
           console.error("Gemini API call failed:", err);
-          assistantResponse = "Lo siento, hubo un error de comunicación con el servicio de IA de Gemini. Por favor asegúrate de que tu GEMINI_API_KEY sea válida.";
+          assistantResponse = `Lo siento, hubo un error de comunicación con el servicio de IA de Gemini. Detalle del error: ${err.message || err}. Por favor asegúrate de que tu GEMINI_API_KEY en Render sea correcta.`;
         }
       }
 
