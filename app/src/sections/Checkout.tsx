@@ -10,7 +10,7 @@ type Plan = 'pro' | 'family';
 
 const PLAN_CONFIG: Record<Plan, {
   name: string; desc: string; icon: typeof Crown; color: string; gradient: string;
-  features: string[]; monthly: number; yearly: number; yearlyDiscount: string;
+  features: string[]; monthly: number; yearly: number; monthlyARS: number; yearlyARS: number; yearlyDiscount: string;
 }> = {
   pro: {
     name: 'Pro',
@@ -28,6 +28,8 @@ const PLAN_CONFIG: Record<Plan, {
     ],
     monthly: 4.99,
     yearly: 39.99,
+    monthlyARS: 5000,
+    yearlyARS: 40000,
     yearlyDiscount: '33% OFF',
   },
   family: {
@@ -45,6 +47,8 @@ const PLAN_CONFIG: Record<Plan, {
     ],
     monthly: 8.99,
     yearly: 69.99,
+    monthlyARS: 9000,
+    yearlyARS: 70000,
     yearlyDiscount: '35% OFF',
   },
 };
@@ -83,7 +87,8 @@ export default function Checkout() {
 
   const plan = PLAN_CONFIG[selectedPlan];
   const price = billing === 'monthly' ? plan.monthly : plan.yearly;
-  const period = billing === 'monthly' ? '/mes' : '/ano';
+  const priceARS = billing === 'monthly' ? plan.monthlyARS : plan.yearlyARS;
+  const period = billing === 'monthly' ? '/mes' : '/año';
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] flex flex-col">
@@ -161,15 +166,17 @@ export default function Checkout() {
           className="p-6 rounded-2xl glass-strong mb-6 text-center"
           style={{ boxShadow: `0 0 40px ${plan.color}15, inset 0 1px 0 rgba(255,255,255,0.10)` }}
         >
-          <div className="flex items-baseline justify-center gap-1 mb-2">
-            <span className="text-5xl font-extrabold bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] bg-clip-text text-transparent">
-              ${price}
+          <div className="flex flex-col items-center justify-center gap-1 mb-2">
+            <span className="text-4xl font-extrabold bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] bg-clip-text text-transparent">
+              ${priceARS.toLocaleString('es-AR')} ARS
             </span>
-            <span className="text-white/30 text-sm">{period}</span>
+            <span className="text-white/40 text-xs mt-1">
+              ({price} USD {period})
+            </span>
           </div>
           {billing === 'yearly' && (
             <p className="text-xs text-[#10B981]">
-              Ahorras ${((plan.monthly * 12) - plan.yearly).toFixed(2)} por ano
+              Ahorrás ${( (plan.monthlyARS * 12) - plan.yearlyARS ).toLocaleString('es-AR')} ARS por año
             </p>
           )}
         </motion.div>

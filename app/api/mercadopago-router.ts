@@ -41,14 +41,14 @@ function getPay() {
 // Para ARS habría que ajustar los precios al tipo de cambio del día
 const PLANS = {
   pro: {
-    monthly: 4.99,
-    yearly: 39.99,
+    monthly: 5000,
+    yearly: 40000,
     title: "IAfinanzas Pro",
     desc: "Transacciones ilimitadas, Experto IA ilimitado, gráficos avanzados, exportar CSV/Excel",
   },
   family: {
-    monthly: 8.99,
-    yearly: 69.99,
+    monthly: 9000,
+    yearly: 70000,
     title: "IAfinanzas Familiar",
     desc: "Todo lo de Pro + hasta 5 familiares, presupuesto compartido, metas familiares",
   },
@@ -91,8 +91,8 @@ async function createSubscription(
         frequency_type,
         // transaction_amount es el monto que se cobra en cada ciclo
         transaction_amount: amount,
-        // currency_id en MP Argentina para cobros internacionales en USD
-        currency_id: "USD",
+        // currency_id for subscriptions in Argentina MUST be ARS
+        currency_id: "ARS",
         // start_date: primera fecha de cobro (inmediata)
         start_date: new Date().toISOString(),
         // end_date: sin fin (suscripción indefinida, el usuario puede cancelar)
