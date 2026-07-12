@@ -100,17 +100,53 @@ export default function Quotes() {
     }, 600);
   };
 
-  // Helper de simulador
+  // Helper de simulador con rebalanceo proporcional e interactividad fluida (siempre suma 100%)
   const handleAllocationChange = (symbol: string, value: number) => {
-    const totalWithoutCurrent = Object.entries(allocations)
-      .filter(([key]) => key !== symbol)
-      .reduce((sum, [, val]) => sum + val, 0);
-
-    const targetVal = Math.min(100 - totalWithoutCurrent, Math.max(0, value));
-    setAllocations(prev => ({
-      ...prev,
-      [symbol]: targetVal,
-    }));
+    const symbols = Object.keys(allocations);
+    const prevAlloc = { ...allocations };
+    const targetVal = Math.min(100, Math.max(0, value));
+    
+    if (symbols.length <= 1) {
+      setAllocations({ [symbol]: 100 });
+      return;
+    }
+    
+    const diff = targetVal - prevAlloc[symbol];
+    const otherSymbols = symbols.filter(s => s !== symbol);
+    const otherTotal = otherSymbols.reduce((sum, s) => sum + prevAlloc[s], 0);
+    
+    let newAllocations = { ...prevAlloc, [symbol]: targetVal };
+    
+    if (diff !== 0) {
+      if (otherTotal > 0) {
+        let distributedSum = 0;
+        otherSymbols.forEach((s) => {
+          const ratio = prevAlloc[s] / otherTotal;
+          const newVal = Math.max(0, prevAlloc[s] - (ratio * diff));
+          newAllocations[s] = Math.round(newVal);
+          distributedSum += newAllocations[s];
+        });
+        
+        let currentTotal = targetVal + distributedSum;
+        let error = 100 - currentTotal;
+        if (error !== 0 && otherSymbols.length > 0) {
+          newAllocations[otherSymbols[0]] = Math.max(0, newAllocations[otherSymbols[0]] + error);
+        }
+      } else {
+        const share = diff / otherSymbols.length;
+        otherSymbols.forEach(s => {
+          newAllocations[s] = Math.max(0, Math.round(prevAlloc[s] - share));
+        });
+        
+        let currentTotal = Object.values(newAllocations).reduce((sum, v) => sum + v, 0);
+        let error = 100 - currentTotal;
+        if (error !== 0 && otherSymbols.length > 0) {
+          newAllocations[otherSymbols[0]] = Math.max(0, newAllocations[otherSymbols[0]] + error);
+        }
+      }
+    }
+    
+    setAllocations(newAllocations);
   };
 
   const getAssetPrice = (symbol: string) => {
