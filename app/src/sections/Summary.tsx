@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { ArrowLeft, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, PiggyBank, Download } from 'lucide-react'
 import { trpc } from '@/providers/trpc'
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts'
+import { motion } from 'framer-motion'
 
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
@@ -141,6 +142,8 @@ export default function Summary() {
         <div className="flex justify-center py-20"><div className="w-8 h-8 border-2 border-[#FF2D92] border-t-transparent rounded-full animate-spin" /></div>
       ) : (
         <div className="space-y-6">
+          <FinancialHealthStatus savingsRate={monthData.savingsRate} />
+
           {/* Key Metrics */}
           <div className="grid grid-cols-2 gap-3">
             <div className="p-4 rounded-2xl bg-[#1A1A1A] border border-white/[0.06] text-center">
@@ -321,7 +324,7 @@ export default function Summary() {
             💡 Consejos de tu Asesor IA
           </h3>
           <p className="text-[11px] text-gray-700 leading-relaxed whitespace-pre-line">
-            {lastAiMessage || "Comienza a chatear con tu Asesor de IA en la pestaña 'Asesor' para recibir consejos personalizados en tus reportes descargables."}
+            {lastAiMessage ? formatAiAdvice(lastAiMessage) : "Comienza a chatear con tu Asesor de IA en la pestaña 'Asesor' para recibir consejos personalizados en tus reportes descargables."}
           </p>
         </div>
 
@@ -331,5 +334,59 @@ export default function Summary() {
         </div>
       </div>
     </div>
+  );
+}
+
+function formatAiAdvice(text: string) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, idx) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={idx} className="font-bold text-gray-900">{part.slice(2, -2)}</strong>;
+    }
+    return part;
+  });
+}
+
+function FinancialHealthStatus({ savingsRate }: { savingsRate: number }) {
+  let label = "Crítico";
+  let desc = "Estás gastando más de lo que ingresas o no tienes margen de ahorro. ¡Necesitas un ajuste urgente!";
+  let color = "text-[#FF4D6A]";
+  let bg = "bg-[#FF4D6A]/10";
+  let border = "border-[#FF4D6A]/20";
+
+  if (savingsRate > 20) {
+    label = "Excelente";
+    desc = "Estás ahorrando más del 20% de tus ingresos. ¡Tu salud financiera es sólida y estás listo para invertir!";
+    color = "text-[#00E5FF]";
+    bg = "bg-[#00E5FF]/10";
+    border = "border-[#00E5FF]/20";
+  } else if (savingsRate > 10) {
+    label = "Bueno";
+    desc = "Estás ahorrando entre el 10% y 20%. Mantén este ritmo y considera diversificar tu capital.";
+    color = "text-[#FFD166]";
+    bg = "bg-[#FFD166]/10";
+    border = "border-[#FFD166]/20";
+  } else if (savingsRate >= 0) {
+    label = "Regular";
+    desc = "Tu margen de ahorro es muy bajo (menos del 10%). Un presupuesto más estricto te ayudará a crecer.";
+    color = "text-[#FF6B35]";
+    bg = "bg-[#FF6B35]/10";
+    border = "border-[#FF6B35]/20";
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`p-5 rounded-2xl border ${bg} ${border}`}
+    >
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[10px] uppercase font-bold tracking-wider text-white/40">Estado de Salud Financiera</span>
+        <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${bg} border ${border} ${color}`}>
+          {label}
+        </span>
+      </div>
+      <p className="text-xs text-white/70 leading-relaxed">{desc}</p>
+    </motion.div>
   );
 }
