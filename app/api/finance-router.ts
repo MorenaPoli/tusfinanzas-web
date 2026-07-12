@@ -477,7 +477,21 @@ ${history.map(h => `${h.role === 'user' ? 'Usuario' : 'Asistente'}: ${h.content}
           assistantResponse = result.response.text() || "Lo siento, tuve un problema procesando tu consulta. Por favor intenta de nuevo.";
         } catch (err: any) {
           console.error("Gemini API call failed:", err);
-          assistantResponse = `Lo siento, hubo un error de comunicación con el servicio de IA de Gemini. Detalle del error: ${err.message || err}. Por favor asegúrate de que tu GEMINI_API_KEY en Render sea correcta.`;
+          let listInfo = "";
+          try {
+            const listRes = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`);
+            if (listRes.ok) {
+              const listData = await listRes.json();
+              const names = listData.models?.map((m: any) => m.name.replace("models/", "")) || [];
+              listInfo = ` Modelos disponibles para tu clave: ${names.join(", ")}`;
+            } else {
+              const errBody = await listRes.text();
+              listInfo = ` (No se pudo listar modelos: Código ${listRes.status} - ${errBody})`;
+            }
+          } catch (listErr: any) {
+            listInfo = ` (Error al listar: ${listErr.message})`;
+          }
+          assistantResponse = `Lo siento, hubo un error de comunicación con el servicio de IA de Gemini. Detalle: ${err.message || err}.${listInfo} Por favor asegúrate de que tu GEMINI_API_KEY sea válida.`;
         }
       }
 
