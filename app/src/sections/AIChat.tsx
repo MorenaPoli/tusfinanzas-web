@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Send, ArrowLeft, Trash2, TrendingUp, Wallet, CreditCard, PiggyBank, Gem, MapPin } from 'lucide-react'
+import { Send, ArrowLeft, Trash2, TrendingUp, Wallet, CreditCard, PiggyBank, Gem, MapPin, Crown } from 'lucide-react'
 import { trpc } from '@/providers/trpc'
 import { useAuth } from '@/hooks/useAuth'
 import { useSubscription } from '@/hooks/useSubscription'
@@ -301,19 +301,38 @@ export default function AIChat() {
               )}
             </div>
           )}
-          <div className="flex gap-3">
-            <input type="text" value={input} onChange={e => setInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && !e.shiftKey && !freeChatBlocked && (e.preventDefault(), handleSend())}
-              placeholder={freeChatBlocked ? 'Limite alcanzado. Suscribite a Pro.' : `Preguntame sobre finanzas en ${ctx.country}...`}
-              className="flex-1 px-5 py-4 bg-[#1A1A1A] border border-white/[0.08] rounded-full text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#8B5CF6] transition-colors"
-              disabled={isLoading || freeChatBlocked} />
-            <motion.button whileTap={{ scale: 0.9 }} onClick={handleSend} disabled={!input.trim() || isLoading || freeChatBlocked}
-              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
-                input.trim() && !freeChatBlocked ? 'bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] shadow-[0_0_20px_rgba(255,45,146,0.3)]' : 'bg-white/[0.05]'
-              }`}>
-              <Send size={18} className={input.trim() && !freeChatBlocked ? 'text-white' : 'text-white/30'} />
-            </motion.button>
-          </div>
+          {freeChatBlocked ? (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-5 rounded-2xl bg-gradient-to-br from-[#FF2D92]/10 to-[#8B5CF6]/5 border border-[#FF2D92]/20 text-center space-y-3 shadow-[0_0_30px_rgba(255,45,146,0.1)] backdrop-blur-md"
+            >
+              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] flex items-center justify-center mx-auto shadow-md">
+                <Crown size={18} className="text-white animate-bounce" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-white">¡Límite de Consultas Alcanzado!</p>
+                <p className="text-xs text-white/40 mt-1">Has consumido tus 100 mensajes diarios del plan gratuito. Pásate al plan Pro para chatear de forma ilimitada con tu experto IA.</p>
+              </div>
+              <button onClick={() => navigate('/checkout')} className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] text-white font-semibold text-xs shadow-lg hover:opacity-90 transition-opacity">
+                Suscribirme a PRO
+              </button>
+            </motion.div>
+          ) : (
+            <div className="flex gap-3">
+              <input type="text" value={input} onChange={e => setInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
+                placeholder={`Preguntame sobre finanzas en ${ctx.country}...`}
+                className="flex-1 px-5 py-4 bg-[#1A1A1A] border border-white/[0.08] rounded-full text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#8B5CF6] transition-colors"
+                disabled={isLoading} />
+              <motion.button whileTap={{ scale: 0.9 }} onClick={handleSend} disabled={!input.trim() || isLoading}
+                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                  input.trim() ? 'bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] shadow-[0_0_20px_rgba(255,45,146,0.3)]' : 'bg-white/[0.05]'
+                }`}>
+                <Send size={18} className={input.trim() ? 'text-white' : 'text-white/30'} />
+              </motion.button>
+            </div>
+          )}
         </div>
       </div>
     </div>

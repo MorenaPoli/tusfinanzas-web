@@ -23,7 +23,7 @@ export default function Layout() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] flex text-white overflow-x-hidden relative">
+    <div className="min-h-screen flex text-white overflow-x-hidden relative">
       {/* Ambient Animated Gradient Blobs */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
         <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-gradient-to-br from-[#FF2D92]/15 to-transparent blur-[120px] animate-float-slow" />
