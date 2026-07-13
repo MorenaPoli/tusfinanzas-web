@@ -6,8 +6,8 @@ import { TRPCProvider } from "@/providers/trpc"
 import ErrorBoundary from '@/components/ErrorBoundary'
 import App from './App.tsx'
 
-// IAfinanzas v2 - force cache invalidation
-console.log('[IAfinanzas] v2 initialized')
+// Tus Finanzas v2 - force cache invalidation
+console.log('[Tus Finanzas] v2 initialized')
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

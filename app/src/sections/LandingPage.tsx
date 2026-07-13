@@ -93,7 +93,7 @@ export default function LandingPage() {
     {
       name: 'Carlos R.',
       role: 'Desarrollador, Mexico DF',
-      text: 'Probe YNAB y era demasiado complejo. IAfinanzas es directo: cargo mis gastos, veo mis graficos y el experto me dice que hacer. Por $4.99 esta regalado.',
+      text: 'Probe YNAB y era demasiado complejo. Tus Finanzas es directo: cargo mis gastos, veo mis graficos y el experto me dice que hacer. Por $4.99 esta regalado.',
       stars: 5,
     },
     {
@@ -132,7 +132,7 @@ export default function LandingPage() {
   ];
 
   const faqs = [
-    { q: 'Cuanto cuesta IAfinanzas?', a: 'Es gratis para empezar. El plan Pro cuesta $4.99 al mes o $39.99 al ano (33% de descuento). El plan Familiar es $8.99/mes o $69.99/ano.' },
+    { q: 'Cuanto cuesta Tus Finanzas?', a: 'Es gratis para empezar. El plan Pro cuesta $4.99 al mes o $39.99 al ano (33% de descuento). El plan Familiar es $8.99/mes o $69.99/ano.' },
     { q: 'Puedo usarlo gratis para siempre?', a: 'Si. El plan gratis incluye 30 transacciones por mes, resumen basico, frases del dia y 5 consultas al experto IA por dia. Para muchos usuarios es suficiente.' },
     { q: 'Mis datos estan seguros?', a: 'Absolutamente. Usamos autenticacion OAuth 2.0 de Kimi, encriptacion de datos y cada usuario solo ve su propia informacion. Tus datos financieros nunca se comparten.' },
     { q: 'Como funciona el experto IA?', a: 'Es un asistente financiero que te da instrucciones concretas, no consejos vagos. Le preguntas "como invierto $500" y te responde con tickers reales, precios exactos y pasos para comprar.' },
@@ -146,8 +146,8 @@ export default function LandingPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0A0A0A]/80 backdrop-blur-2xl border-b border-white/[0.06]">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/logo.jpg" alt="IAfinanzas" className="w-9 h-9 rounded-lg object-cover" />
-            <span className="font-bold text-lg tracking-tight">IAfinanzas</span>
+            <img src="/logo.jpg" alt="Tus Finanzas" className="w-9 h-9 rounded-lg object-cover" />
+            <span className="font-bold text-lg tracking-tight">Tus Finanzas</span>
           </div>
           <div className="hidden md:flex items-center gap-8">
             <a href="#funciones" className="text-sm text-white/50 hover:text-white transition-colors">Funciones</a>
@@ -186,7 +186,7 @@ export default function LandingPage() {
 
               <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
                 className="text-lg text-white/50 leading-relaxed mb-8 max-w-lg">
-                IAfinanzas te ayuda a gestionar ingresos, gastos, inversiones y deudas.
+                Tus Finanzas te ayuda a gestionar ingresos, gastos, inversiones y deudas.
                 Tu experto IA te guia con instrucciones concretas para mejorar tus finanzas.
               </motion.p>
 
@@ -217,7 +217,7 @@ export default function LandingPage() {
               <div className="relative w-[300px] h-[600px] bg-[#111] rounded-[40px] border border-white/10 p-3 shadow-2xl shadow-[#FF2D92]/10">
                 <div className="w-full h-full bg-[#0A0A0A] rounded-[32px] overflow-hidden p-5">
                   <div className="flex items-center justify-between mb-4">
-                    <span className="font-bold text-sm">IAfinanzas</span>
+                    <span className="font-bold text-sm">Tus Finanzas</span>
                     <img src="/logo.jpg" alt="" className="w-6 h-6 rounded-full object-cover" />
                   </div>
                   <p className="text-[9px] text-white/30 uppercase mb-1">Patrimonio Neto</p>
@@ -381,7 +381,7 @@ export default function LandingPage() {
             <div className="text-center mb-12">
               <span className="text-[10px] text-[#FF2D92] uppercase tracking-[0.2em] font-semibold">Comparativa</span>
               <h2 className="text-3xl lg:text-4xl font-extrabold tracking-tight mt-3 mb-4">
-                Por que elegir <span className="bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] bg-clip-text text-transparent">IAfinanzas</span>
+                Por que elegir <span className="bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] bg-clip-text text-transparent">Tus Finanzas</span>
               </h2>
             </div>
           </Reveal>
@@ -390,7 +390,7 @@ export default function LandingPage() {
             <div className="rounded-2xl bg-[#111] border border-white/[0.06] overflow-hidden">
               <div className="grid grid-cols-4 gap-0 text-center">
                 <div className="p-4 text-[10px] text-white/30 uppercase tracking-wider font-semibold border-b border-white/[0.06]">Caracteristica</div>
-                <div className="p-4 text-[10px] text-[#FF2D92] uppercase tracking-wider font-bold border-b border-white/[0.06] bg-[#FF2D92]/5">IAfinanzas</div>
+                <div className="p-4 text-[10px] text-[#FF2D92] uppercase tracking-wider font-bold border-b border-white/[0.06] bg-[#FF2D92]/5">Tus Finanzas</div>
                 <div className="p-4 text-[10px] text-white/30 uppercase tracking-wider font-semibold border-b border-white/[0.06]">YNAB</div>
                 <div className="p-4 text-[10px] text-white/30 uppercase tracking-wider font-semibold border-b border-white/[0.06]">Mint</div>
 
@@ -584,8 +584,8 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <img src="/logo.jpg" alt="IAfinanzas" className="w-7 h-7 rounded-lg object-cover" />
-                <span className="font-bold text-sm">IAfinanzas</span>
+                <img src="/logo.jpg" alt="Tus Finanzas" className="w-7 h-7 rounded-lg object-cover" />
+                <span className="font-bold text-sm">Tus Finanzas</span>
               </div>
               <p className="text-xs text-white/30 leading-relaxed">
                 Controla tus finanzas con un experto IA a tu lado. Simple, seguro y accesible.
@@ -617,7 +617,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="border-t border-white/[0.06] pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-[10px] text-white/20"> 2025 IAfinanzas. Todos los derechos reservados.</p>
+            <p className="text-[10px] text-white/20"> 2025 Tus Finanzas. Todos los derechos reservados.</p>
             <div className="flex items-center gap-4">
               <a href="#" className="text-[10px] text-white/20 hover:text-white/40 transition-colors">Terminos</a>
               <a href="#" className="text-[10px] text-white/20 hover:text-white/40 transition-colors">Privacidad</a>

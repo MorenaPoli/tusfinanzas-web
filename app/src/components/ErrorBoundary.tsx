@@ -47,7 +47,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             </div>
             <button
               onClick={() => {
-                localStorage.removeItem('iafinanzas_onboarding_completed'); // Reset onboarding just in case
+                localStorage.removeItem('tusfinanzas_onboarding_completed'); // Reset onboarding just in case
                 window.location.reload();
               }}
               className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-xs font-bold"

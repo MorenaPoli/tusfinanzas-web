@@ -12,7 +12,7 @@ const COLORS = ['#FF2D92', '#8B5CF6', '#6366F1', '#00E5FF', '#FFD166', '#10B981'
 export default function Summary() {
   const navigate = useNavigate();
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().toISOString().slice(0, 7));
-  const [currency, setCurrency] = useState<string>(() => localStorage.getItem('iafinanzas_currency') || 'USD');
+  const [currency, setCurrency] = useState<string>(() => localStorage.getItem('tusfinanzas_currency') || 'USD');
 
   const { data: transactions } = trpc.finance.listTransactions.useQuery();
   const { data: rates } = trpc.finance.getExchangeRates.useQuery();
@@ -104,7 +104,7 @@ export default function Summary() {
               key={curr}
               onClick={() => {
                 setCurrency(curr);
-                localStorage.setItem('iafinanzas_currency', curr);
+                localStorage.setItem('tusfinanzas_currency', curr);
               }}
               className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${
                 currency === curr
@@ -218,7 +218,7 @@ export default function Summary() {
         {/* Document Header */}
         <div className="flex items-center justify-between border-b-2 border-gray-800 pb-4 mb-6">
           <div>
-            <h1 className="text-2xl font-black tracking-tight uppercase">IAfinanzas</h1>
+            <h1 className="text-2xl font-black tracking-tight uppercase">Tus Finanzas</h1>
             <p className="text-xs text-gray-500 uppercase tracking-widest font-semibold mt-0.5">Reporte de Salud Financiera</p>
           </div>
           <div className="text-right">
@@ -330,7 +330,7 @@ export default function Summary() {
 
         {/* Footer info */}
         <div className="mt-8 border-t pt-4 text-center text-[9px] text-gray-400">
-          IAfinanzas © 2026 — Inteligencia Artificial al servicio de tu tranquilidad financiera.
+          Tus Finanzas © 2026 — Inteligencia Artificial al servicio de tu tranquilidad financiera.
         </div>
       </div>
     </div>

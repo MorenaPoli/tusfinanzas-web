@@ -22,9 +22,9 @@ export default function Profile() {
   const [name, setName] = useState(user?.name || '');
   const [country, setCountry] = useState(user?.country || 'Argentina');
   const [avatar, setAvatar] = useState(user?.avatar || '🚀');
-  const [currency, setCurrency] = useState(() => localStorage.getItem('iafinanzas_currency') || 'USD');
-  const [theme, setTheme] = useState(() => localStorage.getItem('iafinanzas_theme') || 'neon');
-  const [language, setLanguage] = useState(() => localStorage.getItem('iafinanzas_lang') || 'es');
+  const [currency, setCurrency] = useState(() => localStorage.getItem('tusfinanzas_currency') || 'USD');
+  const [theme, setTheme] = useState(() => localStorage.getItem('tusfinanzas_theme') || 'neon');
+  const [language, setLanguage] = useState(() => localStorage.getItem('tusfinanzas_lang') || 'es');
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
 
@@ -64,9 +64,9 @@ export default function Profile() {
       });
 
       // 2. Update local storage preferences
-      localStorage.setItem('iafinanzas_currency', currency);
-      localStorage.setItem('iafinanzas_theme', theme);
-      localStorage.setItem('iafinanzas_lang', language);
+      localStorage.setItem('tusfinanzas_currency', currency);
+      localStorage.setItem('tusfinanzas_theme', theme);
+      localStorage.setItem('tusfinanzas_lang', language);
 
       // Force currency list invalidation if exists
       utils.finance.getTotals.invalidate();

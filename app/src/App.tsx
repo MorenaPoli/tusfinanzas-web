@@ -36,7 +36,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// IAfinanzas v2 - Build cache-bust
+// Tus Finanzas v2 - Build cache-bust
 export default function App() {
   return (
     <Suspense fallback={

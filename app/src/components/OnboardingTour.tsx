@@ -15,7 +15,7 @@ interface TourStep {
 const STEPS: TourStep[] = [
   {
     icon: Sparkles,
-    title: '¡Bienvenido a IAfinanzas!',
+    title: '¡Bienvenido a Tus Finanzas!',
     desc: 'La plataforma de control de dinero potenciada por Inteligencia Artificial. Queremos hacerte un breve recorrido interactivo por tus herramientas comerciales.',
     highlight: 'General',
     route: '/dashboard',
@@ -70,7 +70,7 @@ export default function OnboardingTour() {
   // Initialize
   useEffect(() => {
     try {
-      const completed = localStorage.getItem('iafinanzas_onboarding_completed');
+      const completed = localStorage.getItem('tusfinanzas_onboarding_completed');
       if (!completed) {
         const timer = window.setTimeout(() => setIsVisible(true), 1200);
         return () => window.clearTimeout(timer);
@@ -148,7 +148,7 @@ export default function OnboardingTour() {
 
   const handleComplete = () => {
     try {
-      localStorage.setItem('iafinanzas_onboarding_completed', 'true');
+      localStorage.setItem('tusfinanzas_onboarding_completed', 'true');
     } catch (err) {
       console.warn('Onboarding: localStorage save failed', err);
     }

@@ -15,7 +15,7 @@ export const supportRouter = createRouter({
     .mutation(async ({ ctx, input }) => {
       const db = getDb();
       const userId = ctx.user.id;
-      const email = ctx.user.email || "usuario@iafinanzas.app";
+      const email = ctx.user.email || "usuario@tusfinanzas.app";
 
       const result = await db.insert(supportTickets).values({
         userId,

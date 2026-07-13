@@ -38,8 +38,8 @@ export default function Support() {
 
   const faqs = [
     {
-      q: 'Cuanto cuesta IAfinanzas?',
-      a: 'IAfinanzas es gratis para empezar. El plan Pro cuesta $4.99/mes o $39.99/ano (33% de descuento). El plan Familiar cuesta $8.99/mes o $69.99/ano.',
+      q: 'Cuanto cuesta Tus Finanzas?',
+      a: 'Tus Finanzas es gratis para empezar. El plan Pro cuesta $4.99/mes o $39.99/ano (33% de descuento). El plan Familiar cuesta $8.99/mes o $69.99/ano.',
     },
     {
       q: 'Puedo cambiar de plan en cualquier momento?',
@@ -81,7 +81,7 @@ export default function Support() {
             <MessageCircle size={24} className="text-[#FF2D92] mb-3" />
             <h3 className="font-semibold text-sm mb-1">Soporte por WhatsApp</h3>
             <p className="text-xs text-white/40 mb-3">Escribinos directo en cualquier momento</p>
-            <button onClick={() => window.open('https://wa.me/5491135358025?text=Hola!%20Necesito%20ayuda%20con%20IAfinanzas.', '_blank')} className="text-xs text-[#FF2D92] font-medium hover:underline">
+            <button onClick={() => window.open('https://wa.me/5491135358025?text=Hola!%20Necesito%20ayuda%20con%20Tus%20Finanzas.', '_blank')} className="text-xs text-[#FF2D92] font-medium hover:underline">
               Iniciar chat →
             </button>
           </div>
@@ -91,7 +91,7 @@ export default function Support() {
           className="p-5 rounded-2xl glass-card">
           <Mail size={24} className="text-[#8B5CF6] mb-3" />
           <h3 className="font-semibold text-sm mb-1">Email</h3>
-          <p className="text-xs text-white/40 mb-3">soporte@iafinanzas.app</p>
+          <p className="text-xs text-white/40 mb-3">soporte@tusfinanzas.app</p>
           <span className="text-xs text-white/20">Respondemos en 24-48hs</span>
         </motion.div>
       </div>

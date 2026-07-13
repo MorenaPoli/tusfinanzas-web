@@ -125,8 +125,8 @@ export default function Layout() {
         {/* Logo & Notifications */}
         <div className="p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/logo.jpg" alt="IAfinanzas" className="w-9 h-9 rounded-lg object-cover" />
-            <span className="font-bold text-lg tracking-tight">IAfinanzas</span>
+            <img src="/logo.jpg" alt="Tus Finanzas" className="w-9 h-9 rounded-lg object-cover" />
+            <span className="font-bold text-lg tracking-tight">Tus Finanzas</span>
           </div>
           <NotificationBell />
         </div>

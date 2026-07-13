@@ -43,13 +43,13 @@ const PLANS = {
   pro: {
     monthly: 5000,
     yearly: 40000,
-    title: "IAfinanzas Pro",
+    title: "Tus Finanzas Pro",
     desc: "Transacciones ilimitadas, Experto IA ilimitado, gráficos avanzados, exportar CSV/Excel",
   },
   family: {
     monthly: 9000,
     yearly: 70000,
-    title: "IAfinanzas Familiar",
+    title: "Tus Finanzas Familiar",
     desc: "Todo lo de Pro + hasta 5 familiares, presupuesto compartido, metas familiares",
   },
 };
@@ -72,7 +72,7 @@ async function createSubscription(
   const cfg = PLANS[plan];
   const amount = billing === "monthly" ? cfg.monthly : cfg.yearly;
   const { frequency, frequency_type } = getBillingFrequency(billing);
-  const origin = process.env.APP_URL || "https://iafinanzas.app";
+  const origin = process.env.APP_URL || "https://tusfinanzas.app";
 
   const pa = getPreApproval();
   const resp = await pa.create({
@@ -84,7 +84,7 @@ async function createSubscription(
       // URL a donde MP redirige al usuario tras autorizar el débito
       back_url: `${origin}/payment/success`,
       // Datos del pagador
-      payer_email: email === "policoding@gmail.com" ? "test_user_1202636372@testuser.com" : (email || `usuario${userId}@iafinanzas.app`),
+      payer_email: email === "policoding@gmail.com" ? "test_user_1202636372@testuser.com" : (email || `usuario${userId}@tusfinanzas.app`),
       // Configuración del cobro automático recurrente
       auto_recurring: {
         frequency,
