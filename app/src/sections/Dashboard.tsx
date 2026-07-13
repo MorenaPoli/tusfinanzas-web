@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { LogOut, Wallet, TrendingUp, TrendingDown, PiggyBank, Gem, CreditCard, Sparkles, Plus, Crown, AlertTriangle, Trash2 } from 'lucide-react'
 import { trpc } from '@/providers/trpc'
 import { useAuth } from '@/hooks/useAuth'
