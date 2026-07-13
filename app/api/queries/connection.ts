@@ -20,7 +20,7 @@ export function getDb() {
     const pool = mysql.createPool({
       uri: cleanUrl,
       ssl: {
-        rejectUnauthorized: true, // Required for secure hosted DBs like Aiven
+        rejectUnauthorized: false, // Bypasses verification of self-signed certificates used by Aiven/Render
       },
     });
 
