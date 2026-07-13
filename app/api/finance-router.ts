@@ -277,17 +277,143 @@ export const financeRouter = createRouter({
     .query(async ({ ctx, input }) => {
       const db = getDb();
       const userId = ctx.user.id;
+      const targetDate = input?.date || new Date().toISOString().slice(0, 10);
 
       const results = await db
         .select()
         .from(dailyQuotes)
         .where(eq(dailyQuotes.userId, userId));
 
-      const targetDate = input?.date || new Date().toISOString().slice(0, 10);
-      return results.find((r) => {
+      const existing = results.find((r) => {
         const dateStr = r.date instanceof Date ? r.date.toISOString().slice(0, 10) : String(r.date);
         return dateStr === targetDate;
-      }) || null;
+      });
+
+      if (existing) {
+        return existing;
+      }
+
+      // Generate a new advice for today!
+      const txs = await db
+        .select()
+        .from(transactions)
+        .where(eq(transactions.userId, userId));
+
+      const totals = { income: 0, expense: 0, capital: 0, debt: 0, asset: 0, investment: 0 };
+      for (const t of txs) {
+        const converted = parseFloat(t.amount);
+        if (t.type === "income") totals.income += converted;
+        else if (t.type === "expense") totals.expense += converted;
+        else if (t.type === "debt") totals.debt += converted;
+        else if (t.type === "asset") totals.asset += converted;
+        else if (t.type === "investment") totals.investment += converted;
+      }
+
+      totals.capital = totals.income - totals.expense;
+      const netWorth = totals.capital + totals.asset - totals.debt;
+      const savingsRate = totals.income > 0 ? (totals.capital / totals.income) * 100 : 0;
+
+      const goalsList = await db
+        .select()
+        .from(savingsGoals)
+        .where(eq(savingsGoals.userId, userId));
+      const goalsStr = goalsList.map(g => `- ${g.name}: Meta: $${g.targetAmount}, Ahorrado: $${g.currentAmount}`).join("; ");
+
+      const userCountry = ctx.user.country || "Argentina";
+      let type: "excellent" | "good" | "regular" | "critical" = "regular";
+      if (savingsRate > 20) type = "excellent";
+      else if (savingsRate > 10) type = "good";
+      else if (savingsRate >= 0) type = "regular";
+      else type = "critical";
+
+      let generatedText = "";
+      const apiKey = process.env.GEMINI_API_KEY;
+
+      if (apiKey && apiKey !== "placeholder" && !apiKey.includes("TEST-12345")) {
+        const candidateModels = ["gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-1.5-flash"];
+        for (const modelName of candidateModels) {
+          try {
+            const genAI = new GoogleGenerativeAI(apiKey);
+            const model = genAI.getGenerativeModel({
+              model: modelName,
+              generationConfig: { temperature: 0.8, maxOutputTokens: 150 }
+            });
+            
+            const prompt = `Asesórame sobre un único consejo financiero del día para el usuario, corto, motivador y sumamente accionable (máximo 40 palabras) en base a su situación actual:
+- País: ${userCountry}
+- Ingresos: $${totals.income} USD
+- Gastos: $${totals.expense} USD
+- Patrimonio neto: $${netWorth} USD
+- Tasa de ahorro actual: ${savingsRate.toFixed(1)}%
+- Deudas: $${totals.debt} USD
+- Inversiones: $${totals.investment} USD
+- Metas de ahorro activas: ${goalsStr || "ninguna"}
+
+El consejo debe ser muy específico e inteligente, adaptado a su país y sus números. No uses introducciones como "Aquí tienes tu consejo:", ve directo a la acción.`;
+
+            const result = await model.generateContent(prompt);
+            const text = result.response.text().trim().replace(/^["']|["']$/g, '');
+            if (text) {
+              generatedText = text;
+              break;
+            }
+          } catch (err) {
+            console.warn(`Daily quote model ${modelName} failed, trying next...`);
+          }
+        }
+      }
+
+      if (!generatedText) {
+        const advicePools: Record<string, string[]> = {
+          Argentina: [
+            "Con la inflación alta, mantén tu liquidez rindiendo en cuentas remuneradas o FCI de rescate inmediato (Mercado Pago, Naranja X o Ualá) para no perder poder de compra.",
+            "Considera dolarizar ahorros de mediano plazo comprando Dólar MEP o CEDEARs de empresas estables (como Coca-Cola o Apple) desde tu broker local.",
+            "Evita financiar el saldo mínimo de tu tarjeta; el interés rotativo es elevadísimo en Argentina. Consolida deudas con préstamos a tasa fija más baja si es posible.",
+            "Destina parte de tus ahorros a construir un fondo de emergencia de 3 meses en dólares MEP o billete para proteger tu patrimonio de devaluaciones.",
+          ],
+          Mexico: [
+            "Aprovecha las tasas competitivas de Cetesdirecto. Cetes a 28 o 91 días son la opción de renta fija más segura del país, libre de comisiones bancarias.",
+            "Diversifica tus ahorros a corto plazo en SOFIPOs reguladas (como Nu, Finsus o Klar) para capturar altos rendimientos protegidos por el seguro Prosofipo.",
+            "Si tributas en RESICO, cuida presentar tus declaraciones de ISR a tiempo para mantener tus tasas fiscales bajas preferenciales (1% a 2.5%).",
+            "Abre un Plan Personal de Retiro (PPR) deducible para reducir tu carga fiscal en tu declaración anual del SAT mientras creas patrimonio para el retiro.",
+          ],
+          Espana: [
+            "Maximiza tu capital con cuentas remuneradas de neobancos europeos (como Trade Republic o MyInvestor) que superan las tasas de la banca tradicional española.",
+            "Invierte a largo plazo mediante Fondos Indexados (en Vanguard o Amundi) aprovechando la exención de impuestos al traspasar dinero entre fondos en España.",
+            "Si buscas renta fija estatal, compra Letras del Tesoro directamente en la web del Tesoro Público para ahorrarte las comisiones bancarias.",
+            "No olvides revisar las deducciones autonómicas al alquiler en la declaración de la Renta; muchos contribuyentes las pierden por no incluirlas.",
+          ],
+          default: [
+            "Crea tu Fondo de Emergencia: junta de 3 a 6 meses de tus gastos corrientes y mantenlo en una cuenta segura de fácil y rápido acceso.",
+            "Sigue la regla presupuestaria 50/30/20: destina el 50% a tus necesidades básicas, 30% a entretenimiento y 20% al ahorro y liquidación de deudas.",
+            "Prioriza saldar las tarjetas de crédito con mayor tasa de interés (método avalancha) para frenar el efecto acumulado de las tasas altas.",
+            "Tu capacidad de generar ingresos es tu mejor activo. Invierte en tu educación o en adquirir habilidades de alta demanda en el mercado.",
+          ]
+        };
+
+        const pool = advicePools[userCountry] || advicePools.default;
+        generatedText = pool[Math.floor(Math.random() * pool.length)];
+      }
+
+      // Save generated quote to DB
+      try {
+        await db.insert(dailyQuotes).values({
+          userId,
+          text: generatedText,
+          type,
+          date: new Date(targetDate),
+        });
+      } catch (err) {
+        console.error("Failed to save daily quote to DB:", err);
+      }
+
+      return {
+        id: Date.now(),
+        userId,
+        text: generatedText,
+        type,
+        date: new Date(targetDate),
+      };
     }),
 
   createDailyQuote: authedQuery

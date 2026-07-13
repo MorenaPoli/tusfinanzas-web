@@ -6,6 +6,19 @@ import { trpc } from '@/providers/trpc';
 
 const GOAL_ICONS = ['🎯', '🚗', '🏠', '✈️', '📱', '💻', '🎓', '💍', '🏥', '👶', '🐶', '✨'];
 
+const SUGGESTED_GOALS = [
+  { name: 'Fondo de Emergencia (3 meses)', target: '150000', icon: '🎯' },
+  { name: 'Viaje a las Cataratas / Bariloche', target: '350000', icon: '✈️' },
+  { name: 'Cambiar el Celular', target: '200000', icon: '📱' },
+  { name: 'Notebook para Programar', target: '450000', icon: '💻' },
+  { name: 'Invertir en Acciones/CEDEARs', target: '80000', icon: '✨' },
+  { name: 'Enganche para Departamento', target: '1200000', icon: '🏠' },
+  { name: 'Curso de Especialización', target: '60000', icon: '🎓' },
+  { name: 'Cambiar el Auto (Ahorro inicial)', target: '950000', icon: '🚗' },
+  { name: 'Vacaciones de Verano', target: '250000', icon: '✈️' },
+  { name: 'Bici Eléctrica / Monopatín', target: '180000', icon: '⚡' },
+];
+
 export default function Goals() {
   const navigate = useNavigate();
   const utils = trpc.useUtils();
@@ -27,6 +40,17 @@ export default function Goals() {
   const [deadline, setDeadline] = useState('');
   const [icon, setIcon] = useState('🎯');
 
+  const handleSuggestGoal = () => {
+    const randomGoal = SUGGESTED_GOALS[Math.floor(Math.random() * SUGGESTED_GOALS.length)];
+    setName(randomGoal.name);
+    setTarget(randomGoal.target);
+    setIcon(randomGoal.icon);
+    // Set a date 6 months from now
+    const d = new Date();
+    d.setMonth(d.getMonth() + 6);
+    setDeadline(d.toISOString().split('T')[0]);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !target) return;
@@ -44,7 +68,7 @@ export default function Goals() {
   const progress = totalTarget > 0 ? (totalCurrent / totalTarget) * 100 : 0;
 
   return (
-    <div className="min-h-screen bg-transparent px-6 py-6">
+    <div id="goals-panel" className="min-h-screen bg-transparent px-6 py-6">
       <div className="max-w-lg mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -83,6 +107,16 @@ export default function Goals() {
             <motion.form initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
               onSubmit={handleSubmit} className="overflow-hidden mb-6 space-y-3">
               <div className="p-5 rounded-2xl glass-card space-y-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-semibold text-white/50">Nueva Meta</span>
+                  <button
+                    type="button"
+                    onClick={handleSuggestGoal}
+                    className="flex items-center gap-1.5 text-[10px] font-bold text-[#FF2D92] hover:text-[#8B5CF6] transition-colors bg-white/5 px-2.5 py-1 rounded-lg border border-white/5"
+                  >
+                    ✨ Sugerir Meta
+                  </button>
+                </div>
                 <input type="text" value={name} onChange={e => setName(e.target.value)}
                   placeholder="Nombre de la meta (ej: Auto nuevo)"
                   className="w-full px-4 py-3 glass rounded-xl text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF2D92] transition-colors"

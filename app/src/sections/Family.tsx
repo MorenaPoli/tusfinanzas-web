@@ -90,7 +90,7 @@ export default function Family() {
   };
 
   return (
-    <div className="max-w-lg mx-auto px-6 pt-6 pb-20">
+    <div id="family-panel" className="max-w-lg mx-auto px-6 pt-6 pb-20">
       {/* Back Header */}
       <div className="flex items-center gap-3 mb-6">
         <button onClick={() => navigate('/dashboard')} className="p-2 -ml-2 rounded-xl hover:bg-white/5 transition-colors">

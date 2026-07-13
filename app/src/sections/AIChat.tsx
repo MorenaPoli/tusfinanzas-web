@@ -174,7 +174,7 @@ export default function AIChat() {
   ];
 
   return (
-    <div className="min-h-screen bg-transparent flex flex-col">
+    <div className="h-[calc(100vh-32px)] lg:h-[calc(100vh-32px)] bg-transparent flex flex-col overflow-hidden">
       {/* Header */}
       <div className="sticky top-0 z-40 bg-[#080810]/40 backdrop-blur-2xl border-b border-white/[0.06]">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -262,7 +262,7 @@ export default function AIChat() {
                       msg.role === 'assistant'
                         ? 'glass text-white/80'
                         : 'bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] text-white shadow-md'
-                    }`}>
+                    }`} style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
                       {formatMessageContent(msg.content)}
                     </div>
                   </motion.div>
@@ -287,7 +287,7 @@ export default function AIChat() {
       </div>
 
       {/* Input */}
-      <div className="shrink-0 px-6 pb-6 pt-3 bg-gradient-to-t from-[#080810]/80 to-transparent">
+      <div className="shrink-0 px-6 pb-20 lg:pb-6 pt-3 bg-gradient-to-t from-[#080810]/80 to-transparent">
         <div className="max-w-4xl mx-auto">
           {isFree && messages.length > 0 && (
             <div className="flex items-center justify-between mb-2 px-2">

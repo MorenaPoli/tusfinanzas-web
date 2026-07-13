@@ -50,29 +50,7 @@ export default function Dashboard() {
     });
   };
 
-  const createQuote = trpc.finance.createDailyQuote.useMutation({
-    onSuccess: () => utils.finance.getDailyQuote.invalidate(),
-  });
 
-  useEffect(() => {
-    if (dailyQuote === null && totals) {
-      const savingsRate = totals.income > 0 ? ((totals.capital / totals.income) * 100) : 0;
-      let type: 'excellent' | 'good' | 'regular' | 'critical' = 'regular';
-      if (savingsRate > 20) type = 'excellent';
-      else if (savingsRate > 10) type = 'good';
-      else if (savingsRate >= 0) type = 'regular';
-      else type = 'critical';
-      const quotes: Record<string, string[]> = {
-        excellent: ['Tu patrimonio crece. Segui asi.', 'Excelente mes. Tu disciplina da resultados.', 'El efecto compuesto es tu aliado.'],
-        good: ['Vas por buen camino. Mantene el ritmo.', 'Buen trabajo ahorrando.', 'Lo hiciste bien este mes.'],
-        regular: ['Revisa esos gastos chicos.', 'Un presupuesto te ayudaria.', 'Pequenos cambios = grandes resultados.'],
-        critical: ['Gastas mas de lo que ingresa. Plan URGENTE.', 'Crisis detectada. Corta gastos YA.', 'Hoy no gastes mas.'],
-      };
-      const pool = quotes[type];
-      const text = pool[Math.floor(Math.random() * pool.length)];
-      createQuote.mutate({ text, type, date: new Date().toISOString().slice(0, 10) });
-    }
-  }, [dailyQuote, totals]);
 
   const recent = useMemo(() => {
     if (!transactions) return [];
@@ -217,7 +195,7 @@ export default function Dashboard() {
       )}
 
       {/* Net Worth Hero Card */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+      <motion.div id="summary-card" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
         className="relative overflow-hidden rounded-3xl p-7 mb-6 glass-strong glow-pink">
         {/* Inner glow ring */}
         <div className="absolute inset-0 rounded-3xl" style={{ background: 'radial-gradient(ellipse at top right, rgba(255,45,146,0.12) 0%, transparent 60%), radial-gradient(ellipse at bottom left, rgba(139,92,246,0.10) 0%, transparent 60%)' }} />
@@ -291,7 +269,7 @@ export default function Dashboard() {
       )}
 
       {/* Category Budgets Panel (Stage 8) */}
-      <div className="mb-6">
+      <div id="budgets-panel" className="mb-6">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-white/60">Presupuestos de Gastos</h2>
           <button onClick={() => setIsBudgetModalOpen(true)} className="text-xs text-[#FF2D92] hover:underline flex items-center gap-1 font-semibold">
