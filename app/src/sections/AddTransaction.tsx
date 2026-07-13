@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, TrendingUp, TrendingDown, BarChart3, CreditCard, Gem } from 'lucide-react'
 import { trpc } from '@/providers/trpc'
 import { getCategoriesByType } from '@/types'
 import type { TransactionType } from '@/types'
+import MiniKeypad from '@/components/MiniKeypad'
 
 const TYPES: { id: TransactionType; label: string; icon: typeof TrendingUp; desc: string; color: string; gradient: string }[] = [
   { id: 'income', label: 'Ingreso', icon: TrendingUp, desc: 'Salario, freelance, alquileres...', color: '#00E5FF', gradient: 'from-[#00E5FF]/20 to-[#00E5FF]/5' },
@@ -21,6 +22,7 @@ export default function AddTransaction() {
   const [step, setStep] = useState<0 | 1>(0);
   const [type, setType] = useState<TransactionType>('income');
   const [amount, setAmount] = useState('');
+  const [showKeypad, setShowKeypad] = useState(false);
   const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
   const [currency, setCurrency] = useState('USD');
@@ -96,13 +98,34 @@ export default function AddTransaction() {
         className="space-y-5"
       >
         <div>
-          <label className="text-[10px] text-white/30 uppercase tracking-wider mb-2 block font-bold">Monto</label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-[10px] text-white/30 uppercase tracking-wider block font-bold">Monto</label>
+            <button
+              type="button"
+              onClick={() => setShowKeypad(!showKeypad)}
+              className="text-[10px] text-[#FF2D92] font-semibold hover:underline"
+            >
+              {showKeypad ? 'Ocultar teclado' : 'Ver teclado numérico'}
+            </button>
+          </div>
           <div className="relative">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 text-lg font-bold">$</span>
             <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00"
               className="w-full pl-10 pr-5 py-4 glass border border-white/[0.08] rounded-2xl text-lg text-white placeholder:text-white/20 focus:outline-none focus:border-[#8B5CF6] transition-colors"
               autoFocus />
           </div>
+          <AnimatePresence>
+            {showKeypad && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <MiniKeypad value={amount} onChange={setAmount} />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         <div>

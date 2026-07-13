@@ -330,7 +330,7 @@ export const financeRouter = createRouter({
       const apiKey = process.env.GEMINI_API_KEY;
 
       if (apiKey && apiKey !== "placeholder" && !apiKey.includes("TEST-12345")) {
-        const candidateModels = ["gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-1.5-flash"];
+        const candidateModels = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-2.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3.5-flash"];
         for (const modelName of candidateModels) {
           try {
             const genAI = new GoogleGenerativeAI(apiKey);
@@ -614,7 +614,7 @@ Historial de conversación reciente:
 ${history.map(h => `${h.role === 'user' ? 'Usuario' : 'Asistente'}: ${h.content}`).join("\n")}
 `;
 
-          const candidateModels = ["gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-3.5-flash"];
+          const candidateModels = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-2.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3.5-flash"];
           let lastError = null;
           let success = false;
 
@@ -752,7 +752,7 @@ Transacciones a clasificar:
 ${input.rows.map((r, i) => `Índice ${i}: "${r.description}" (monto: ${r.amount})`).join("\n")}
 `;
 
-        const candidateModels = ["gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-3.5-flash"];
+        const candidateModels = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-2.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3.5-flash"];
         let textResult = "[]";
         let success = false;
         let lastError = null;

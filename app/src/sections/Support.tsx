@@ -79,10 +79,10 @@ export default function Support() {
           <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at top left, rgba(255,45,146,0.12) 0%, transparent 60%)' }} />
           <div className="relative">
             <MessageCircle size={24} className="text-[#FF2D92] mb-3" />
-            <h3 className="font-semibold text-sm mb-1">Chat con soporte</h3>
-            <p className="text-xs text-white/40 mb-3">Responde en menos de 24 horas</p>
-            <button onClick={() => navigate('/chat')} className="text-xs text-[#FF2D92] font-medium hover:underline">
-              Ir al chat →
+            <h3 className="font-semibold text-sm mb-1">Soporte por WhatsApp</h3>
+            <p className="text-xs text-white/40 mb-3">Escribinos directo en cualquier momento</p>
+            <button onClick={() => window.open('https://wa.me/5491135358025?text=Hola!%20Necesito%20ayuda%20con%20IAfinanzas.', '_blank')} className="text-xs text-[#FF2D92] font-medium hover:underline">
+              Iniciar chat →
             </button>
           </div>
         </motion.div>

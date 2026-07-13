@@ -160,7 +160,14 @@ export default function AIChat() {
         },
         onError: (err) => {
           setIsLoading(false);
-          alert(err.message);
+          setMessages(prev => [
+            ...prev,
+            {
+              id: Date.now() + 1,
+              role: 'assistant',
+              content: `⚠️ **Error de Comunicación con el Experto IA**\n\nNo se pudo procesar tu mensaje. Esto suele ocurrir cuando el servicio de Google Gemini experimenta picos de demanda temporales o límites de tasa.\n\n*Detalle técnico:* ${err.message || 'Error desconocido'}\n\n*Por favor, intenta enviar tu consulta de nuevo en unos momentos.*`
+            }
+          ]);
         }
       }
     );

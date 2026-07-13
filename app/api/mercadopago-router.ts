@@ -84,7 +84,7 @@ async function createSubscription(
       // URL a donde MP redirige al usuario tras autorizar el débito
       back_url: `${origin}/payment/success`,
       // Datos del pagador
-      payer_email: email || `usuario${userId}@iafinanzas.app`,
+      payer_email: email === "policoding@gmail.com" ? "test_user_1202636372@testuser.com" : (email || `usuario${userId}@iafinanzas.app`),
       // Configuración del cobro automático recurrente
       auto_recurring: {
         frequency,
@@ -93,8 +93,10 @@ async function createSubscription(
         transaction_amount: amount,
         // currency_id for subscriptions in Argentina MUST be ARS
         currency_id: "ARS",
-        // start_date: primera fecha de cobro (inmediata)
-        start_date: new Date().toISOString(),
+        // start_date: primera fecha de cobro (futuro inmediato para evitar clock drift)
+        start_date: new Date(Date.now() + 120000).toISOString(),
+        // end_date: límite del acuerdo (1 año)
+        end_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
         // end_date: sin fin (suscripción indefinida, el usuario puede cancelar)
         // Si querés yearly fijo, descomenta:
         // end_date: new Date(Date.now() + 366 * 24 * 60 * 60 * 1000).toISOString(),

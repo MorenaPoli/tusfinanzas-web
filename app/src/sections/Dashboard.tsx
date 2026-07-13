@@ -7,6 +7,7 @@ import { useSubscription } from '@/hooks/useSubscription'
 import { useEffect, useMemo, useState } from 'react'
 import NotificationBell from '@/components/NotificationBell'
 import OnboardingTour from '@/components/OnboardingTour'
+import MiniKeypad from '@/components/MiniKeypad'
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
@@ -24,30 +25,38 @@ export default function Dashboard() {
   const { data: dailyQuote } = trpc.finance.getDailyQuote.useQuery();
 
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
-  const [budgetCategory, setBudgetCategory] = useState('Comida');
-  const [budgetAmount, setBudgetAmount] = useState('');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(['Comida']);
+  const [budgetAmount, setBudgetAmount] = useState('50000');
+  const [showKeypad, setShowKeypad] = useState(false);
+  const [showBudgetBtnLoading, setShowBudgetBtnLoading] = useState(false);
 
   const { data: budgetReport = [] } = trpc.budget.getBudgetReport.useQuery();
 
-  const setBudget = trpc.budget.set.useMutation({
-    onSuccess: () => {
-      utils.budget.getBudgetReport.invalidate();
-      setIsBudgetModalOpen(false);
-      setBudgetAmount('');
-    },
-  });
+  const setBudget = trpc.budget.set.useMutation();
 
   const deleteBudget = trpc.budget.delete.useMutation({
     onSuccess: () => utils.budget.getBudgetReport.invalidate(),
   });
 
-  const handleBudgetSubmit = (e: React.FormEvent) => {
+  const handleBudgetSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!budgetAmount.trim() || parseFloat(budgetAmount) <= 0) return;
-    setBudget.mutate({
-      category: budgetCategory,
-      amount: budgetAmount,
-    });
+    if (selectedCategories.length === 0 || !budgetAmount.trim() || parseFloat(budgetAmount) <= 0) return;
+    setShowBudgetBtnLoading(true);
+    try {
+      for (const cat of selectedCategories) {
+        await setBudget.mutateAsync({
+          category: cat,
+          amount: budgetAmount,
+        });
+      }
+      utils.budget.getBudgetReport.invalidate();
+      setIsBudgetModalOpen(false);
+      setShowKeypad(false);
+    } catch (err) {
+      alert("Error al definir presupuestos.");
+    } finally {
+      setShowBudgetBtnLoading(false);
+    }
   };
 
 
@@ -376,49 +385,131 @@ export default function Dashboard() {
               exit={{ opacity: 0, scale: 0.95 }}
               className="w-full max-w-sm rounded-2xl glass-strong p-6 border border-white/[0.08] relative"
             >
-              <h3 className="text-lg font-bold mb-1">Definir Presupuesto</h3>
-              <p className="text-xs text-white/40 mb-4">Controlá tus gastos mensuales por categoría</p>
+              <h3 className="text-lg font-bold mb-1">Definir Presupuestos</h3>
+              <p className="text-xs text-white/40 mb-4">Ajustá tus límites mensuales por categoría</p>
 
               <form onSubmit={handleBudgetSubmit} className="space-y-4">
+                {/* Multi-category select grid */}
                 <div>
-                  <label className="block text-xs font-semibold text-white/60 mb-1.5">Categoría</label>
-                  <select
-                    value={budgetCategory}
-                    onChange={(e) => setBudgetCategory(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl glass border border-white/[0.08] text-sm focus:outline-none focus:border-[#FF2D92]"
-                  >
-                    {['Comida', 'Transporte', 'Entretenimiento', 'Servicios', 'Salud', 'Educación', 'Otros'].map(cat => (
-                      <option key={cat} value={cat} className="bg-[#0A0A0A]">{cat}</option>
-                    ))}
-                  </select>
+                  <label className="block text-xs font-semibold text-white/60 mb-2">Categorías a Asignar</label>
+                  <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
+                    {['Comida', 'Transporte', 'Entretenimiento', 'Servicios', 'Salud', 'Educación', 'Otros'].map(cat => {
+                      const selected = selectedCategories.includes(cat);
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => {
+                            if (selected) {
+                              if (selectedCategories.length > 1) {
+                                setSelectedCategories(selectedCategories.filter(c => c !== cat));
+                              }
+                            } else {
+                              setSelectedCategories([...selectedCategories, cat]);
+                            }
+                          }}
+                          className={`px-3 py-1.5 rounded-full text-[10px] font-semibold border transition-all ${
+                            selected 
+                              ? 'bg-[#FF2D92]/20 border-[#FF2D92] text-white shadow-[0_0_12px_rgba(255,45,146,0.25)]' 
+                              : 'glass border-white/5 text-white/40 hover:bg-white/5'
+                          }`}
+                        >
+                          {cat}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-white/60 mb-1.5">Límite Mensual</label>
-                  <input
-                    type="number"
-                    required
-                    min="1"
-                    placeholder="Ej: 50000"
-                    value={budgetAmount}
-                    onChange={(e) => setBudgetAmount(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl glass border border-white/[0.08] text-sm focus:outline-none focus:border-[#FF2D92] text-white"
-                  />
+                {/* Slider / Ruedita Display & Quick adjustments */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-semibold text-white/60">Límite por Categoría</label>
+                    <button
+                      type="button"
+                      onClick={() => setShowKeypad(!showKeypad)}
+                      className="text-[10px] text-[#FF2D92] font-semibold hover:underline"
+                    >
+                      {showKeypad ? 'Ocultar teclado' : 'Ver teclado'}
+                    </button>
+                  </div>
+                  
+                  {/* Large Display Value */}
+                  <div className="text-center py-2.5 bg-white/[0.02] border border-white/[0.06] rounded-xl relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#FF2D92]/5 to-[#8B5CF6]/5" />
+                    <span className="text-2xl font-black tracking-tight text-[#FF2D92] drop-shadow-[0_0_15px_rgba(255,45,146,0.35)]">
+                      ${parseFloat(budgetAmount || "0").toLocaleString('es-AR')}
+                    </span>
+                    <span className="text-[10px] text-white/30 ml-1 font-semibold">ARS</span>
+                  </div>
+
+                  {/* Range Slider */}
+                  <div className="pt-2 px-1">
+                    <input
+                      type="range"
+                      min="5000"
+                      max="300000"
+                      step="5000"
+                      value={budgetAmount || "5000"}
+                      onChange={(e) => setBudgetAmount(e.target.value)}
+                      className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#FF2D92]"
+                    />
+                    <div className="flex justify-between text-[8px] text-white/30 mt-1.5 font-semibold">
+                      <span>$5.000</span>
+                      <span>$150.000</span>
+                      <span>$300.000</span>
+                    </div>
+                  </div>
+
+                  {/* Quick adjustments */}
+                  <div className="flex justify-center gap-1.5 pt-1">
+                    {[-10000, 10000, 50000].map(diff => (
+                      <button
+                        key={diff}
+                        type="button"
+                        onClick={() => {
+                          const val = Math.max(0, parseFloat(budgetAmount || "0") + diff);
+                          setBudgetAmount(val.toString());
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/5 text-[9px] font-bold hover:bg-white/10 text-white/70 hover:text-white transition-all"
+                      >
+                        {diff > 0 ? `+` : ''}{diff.toLocaleString('es-AR')}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Mini Keypad integration */}
+                  <AnimatePresence>
+                    {showKeypad && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <MiniKeypad value={budgetAmount} onChange={setBudgetAmount} />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 <div className="flex items-center justify-end gap-2 pt-2">
                   <button
                     type="button"
-                    onClick={() => setIsBudgetModalOpen(false)}
+                    onClick={() => {
+                      setIsBudgetModalOpen(false);
+                      setShowKeypad(false);
+                    }}
                     className="px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-xs font-bold hover:bg-white/10 transition-colors"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] text-xs font-bold hover:opacity-90 transition-opacity"
+                    disabled={showBudgetBtnLoading}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-1"
                   >
-                    Guardar
+                    {showBudgetBtnLoading ? 'Guardando...' : 'Guardar'}
                   </button>
                 </div>
               </form>

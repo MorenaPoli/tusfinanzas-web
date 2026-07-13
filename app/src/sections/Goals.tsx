@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Plus, Target, Trash2, Calendar } from 'lucide-react';
 import { trpc } from '@/providers/trpc';
+import MiniKeypad from '@/components/MiniKeypad';
 
 const GOAL_ICONS = ['🎯', '🚗', '🏠', '✈️', '📱', '💻', '🎓', '💍', '🏥', '👶', '🐶', '✨'];
 
@@ -106,9 +107,9 @@ export default function Goals() {
           {showForm && (
             <motion.form initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
               onSubmit={handleSubmit} className="overflow-hidden mb-6 space-y-3">
-              <div className="p-5 rounded-2xl glass-card space-y-3">
+              <div className="p-5 rounded-2xl glass-card space-y-4">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-semibold text-white/50">Nueva Meta</span>
+                  <span className="text-xs font-semibold text-white/50">Nueva Meta de Ahorro</span>
                   <button
                     type="button"
                     onClick={handleSuggestGoal}
@@ -117,17 +118,43 @@ export default function Goals() {
                     ✨ Sugerir Meta
                   </button>
                 </div>
-                <input type="text" value={name} onChange={e => setName(e.target.value)}
-                  placeholder="Nombre de la meta (ej: Auto nuevo)"
-                  className="w-full px-4 py-3 glass rounded-xl text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF2D92] transition-colors"
-                  required />
-                <div className="flex gap-3">
-                  <input type="number" value={target} onChange={e => setTarget(e.target.value)}
-                    placeholder="Monto meta ($)" min="1"
-                    className="flex-1 px-4 py-3 glass rounded-xl text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF2D92] transition-colors"
+                <div>
+                  <input type="text" value={name} onChange={e => setName(e.target.value)}
+                    placeholder="Nombre de la meta (ej: Auto nuevo)"
+                    className="w-full px-4 py-3 glass rounded-xl text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF2D92] transition-colors"
                     required />
-                  <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)}
-                    className="flex-1 px-4 py-3 glass rounded-xl text-sm text-white focus:outline-none focus:border-[#FF2D92] transition-colors" />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-white/40 font-semibold">Monto y Fecha límite</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowKeypad(!showKeypad)}
+                      className="text-[10px] text-[#FF2D92] font-semibold hover:underline"
+                    >
+                      {showKeypad ? 'Ocultar teclado' : 'Ver teclado numérico'}
+                    </button>
+                  </div>
+                  <div className="flex gap-3">
+                    <input type="number" value={target} onChange={e => setTarget(e.target.value)}
+                      placeholder="Monto meta ($)" min="1"
+                      className="flex-1 px-4 py-3 glass rounded-xl text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF2D92] transition-colors"
+                      required />
+                    <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)}
+                      className="flex-1 px-4 py-3 glass rounded-xl text-sm text-white focus:outline-none focus:border-[#FF2D92] transition-colors" />
+                  </div>
+                  <AnimatePresence>
+                    {showKeypad && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <MiniKeypad value={target} onChange={setTarget} />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {GOAL_ICONS.map(i => (
@@ -164,24 +191,36 @@ export default function Goals() {
             </button>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
+            {/* Big Permanent CTA button card at the top of the list */}
+            <motion.button
+              onClick={() => {
+                setShowForm(!showForm);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="w-full p-4 rounded-2xl glass border border-dashed border-white/20 hover:border-[#FF2D92]/40 hover:bg-white/[0.02] transition-all flex items-center justify-center gap-2.5 text-xs font-bold text-white/70 hover:text-white"
+            >
+              <Plus size={16} className="text-[#FF2D92]" />
+              Añadir Nueva Meta de Ahorro
+            </motion.button>
+
             {goals?.map((g, i) => {
               const pct = Math.min(100, (parseFloat(g.currentAmount) / parseFloat(g.targetAmount)) * 100);
               return (
                 <motion.div key={g.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                  className="p-4 rounded-2xl glass-card">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{g.icon}</span>
+                  className="p-5 rounded-2xl glass-card border border-white/[0.04]">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3.5">
+                      <span className="text-3xl filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.2)]">{g.icon}</span>
                       <div>
-                        <p className="text-sm font-semibold">{g.name}</p>
-                        <p className="text-[10px] text-white/40">
-                          ${parseFloat(g.currentAmount).toLocaleString()} / ${parseFloat(g.targetAmount).toLocaleString()}
+                        <p className="text-base font-bold text-white leading-tight">{g.name}</p>
+                        <p className="text-xs text-white/50 mt-1 font-medium">
+                          ${parseFloat(g.currentAmount).toLocaleString()} <span className="text-white/30">de</span> ${parseFloat(g.targetAmount).toLocaleString()}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <input type="number" placeholder="+ Aportar $" className="w-24 px-2.5 py-1 glass rounded-xl text-[10px] text-white focus:outline-none focus:border-[#FF2D92] transition-colors animate-pulse-slow"
+                      <input type="number" placeholder="+ Aportar $" className="w-28 px-3 py-1.5 glass rounded-xl text-xs text-white focus:outline-none focus:border-[#FF2D92] transition-colors animate-pulse-slow font-semibold animate-pulse-slow"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             const val = parseFloat(e.currentTarget.value);
@@ -202,19 +241,19 @@ export default function Goals() {
                           }
                         }} />
                       <button onClick={() => deleteGoal.mutate({ id: g.id })}
-                        className="p-1.5 rounded-lg hover:bg-[#FF4D6A]/10 transition-colors">
-                        <Trash2 size={14} className="text-white/20 hover:text-[#FF4D6A]" />
+                        className="p-2 rounded-xl hover:bg-[#FF4D6A]/10 transition-colors">
+                        <Trash2 size={16} className="text-white/30 hover:text-[#FF4D6A]" />
                       </button>
                     </div>
                   </div>
                   <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
                     <div className="h-full rounded-full bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] transition-all" style={{ width: `${pct}%` }} />
                   </div>
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-[10px] text-white/30">{pct.toFixed(0)}% completado</span>
+                  <div className="flex items-center justify-between mt-2.5">
+                    <span className="text-xs font-semibold text-[#FF2D92]">{pct.toFixed(0)}% completado</span>
                     {g.deadline && (
-                      <span className="text-[10px] text-white/30 flex items-center gap-1">
-                        <Calendar size={10} /> {new Date(g.deadline).toLocaleDateString('es-ES')}
+                      <span className="text-xs text-white/40 flex items-center gap-1.5">
+                        <Calendar size={12} className="text-white/30" /> {new Date(g.deadline).toLocaleDateString('es-ES')}
                       </span>
                     )}
                   </div>
