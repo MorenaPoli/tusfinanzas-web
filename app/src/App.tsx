@@ -19,6 +19,7 @@ const PaymentPending = lazy(() => import('@/sections/PaymentPending'))
 const AdminPanel = lazy(() => import('@/sections/AdminPanel'))
 const Goals = lazy(() => import('@/sections/Goals'))
 const Family = lazy(() => import('@/sections/Family'))
+const Profile = lazy(() => import('@/sections/Profile'))
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -57,6 +58,7 @@ export default function App() {
           <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
           <Route path="/goals" element={<ProtectedRoute><Goals /></ProtectedRoute>} />
           <Route path="/family" element={<ProtectedRoute><Family /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
         </Route>
         <Route path="/payment/success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />

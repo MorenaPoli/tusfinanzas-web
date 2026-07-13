@@ -121,7 +121,7 @@ export default function Layout() {
       </div>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 h-[calc(100vh-2rem)] sticky top-8 z-50 glass-strong border-r border-white/[0.06]">
+      <aside className="hidden lg:flex flex-col w-64 h-[calc(100vh-3.5rem)] sticky top-8 z-50 glass-strong border-r border-white/[0.06] pb-4">
         {/* Logo & Notifications */}
         <div className="p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -131,23 +131,30 @@ export default function Layout() {
           <NotificationBell />
         </div>
 
-        {/* User */}
+        {/* User - Click to go to Profile */}
         <div className="px-4 mb-4">
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-            {(user as any)?.avatar ? (
-              <img src={(user as any).avatar} alt="" className="w-9 h-9 rounded-full" />
+          <button 
+            onClick={() => navigate('/profile')}
+            className="w-full flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] hover:border-white/[0.12] transition-all text-left group active:scale-[0.98]"
+          >
+            {(user as any)?.avatar && !(user as any).avatar.startsWith('http') && !(user as any).avatar.startsWith('/') ? (
+              <div className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-lg select-none shrink-0 group-hover:scale-105 transition-transform">
+                {(user as any).avatar}
+              </div>
+            ) : (user as any)?.avatar ? (
+              <img src={(user as any).avatar} alt="" className="w-9 h-9 rounded-full object-cover shrink-0 group-hover:scale-105 transition-transform" />
             ) : (
-              <img src="/logo.jpg" alt="" className="w-9 h-9 rounded-full object-cover" />
+              <img src="/logo.jpg" alt="" className="w-9 h-9 rounded-full object-cover shrink-0 group-hover:scale-105 transition-transform" />
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{user?.name || 'Usuario'}</p>
+              <p className="text-sm font-semibold truncate group-hover:text-white transition-colors">{user?.name || 'Usuario'}</p>
               <p className="text-[10px] text-white/30 truncate">{user?.email || ''}</p>
             </div>
-          </div>
+          </button>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-3 space-y-1">
+        <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
           {NAV.map((item) => {
             const active = isActive(item.path);
             const Icon = item.icon;

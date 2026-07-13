@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { createRouter, publicQuery } from "./middleware";
+import { createRouter, publicQuery, authedQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import { users } from "@db/schema";
 import { eq } from "drizzle-orm";
@@ -101,6 +101,29 @@ export const localAuthRouter = createRouter({
     if (userList.length === 0) return null;
 
     const user = userList[0];
-    return { id: user.id, email: user.email, name: user.name, role: user.role, country: user.country };
+    return { id: user.id, email: user.email, name: user.name, role: user.role, country: user.country, avatar: user.avatar };
   }),
+
+  updateProfile: authedQuery
+    .input(z.object({
+      name: z.string().min(1).optional(),
+      country: z.string().min(1).optional(),
+      avatar: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = getDb();
+      const userId = ctx.user.id;
+
+      await db
+        .update(users)
+        .set({
+          ...(input.name ? { name: input.name } : {}),
+          ...(input.country ? { country: input.country } : {}),
+          ...(input.avatar !== undefined ? { avatar: input.avatar } : {}),
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId));
+
+      return { success: true };
+    }),
 });

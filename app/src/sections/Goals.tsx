@@ -5,7 +5,7 @@ import { ArrowLeft, Plus, Target, Trash2, Calendar } from 'lucide-react';
 import { trpc } from '@/providers/trpc';
 import MiniKeypad from '@/components/MiniKeypad';
 
-const GOAL_ICONS = ['🎯', '🚗', '🏠', '✈️', '📱', '💻', '🎓', '💍', '🏥', '👶', '🐶', '✨'];
+const GOAL_ICONS = ['🎯', '🚗', '🏠', '✈️', '📱', '💻', '🎓', '💍', '🏥', '🐶', '✨'];
 
 const SUGGESTED_GOALS = [
   { name: 'Fondo de Emergencia (3 meses)', target: '150000', icon: '🎯' },
