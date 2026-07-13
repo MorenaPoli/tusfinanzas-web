@@ -37,7 +37,7 @@ export default function Layout() {
   return (
     <div className="min-h-screen flex text-white overflow-x-hidden relative">
       {/* Ambient Aurora Background */}
-      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none" style={{ background: '#080810' }}>
+      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none" style={{ background: '#080810' }}>
         <div className="absolute top-[-15%] left-[-15%] w-[55%] h-[55%] rounded-full animate-float-slow transition-transform duration-1000 ease-out"
           style={{ 
             background: 'radial-gradient(ellipse, rgba(255,45,146,0.28) 0%, transparent 70%)', 
@@ -153,7 +153,7 @@ export default function Layout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 min-h-screen pb-24 lg:pb-0">
+      <main className="flex-1 min-h-screen pb-24 lg:pb-0 relative z-10">
         <Outlet />
       </main>
 
