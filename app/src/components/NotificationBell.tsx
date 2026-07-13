@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Check, Info, Trash2, Users, CreditCard, Sparkles, AlertTriangle } from 'lucide-react';
+import { Bell, Check, Info, Users, CreditCard, Sparkles, AlertTriangle } from 'lucide-react';
 import { trpc } from '@/providers/trpc';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -13,7 +13,9 @@ export default function NotificationBell() {
     onSuccess: () => utils.notification.list.invalidate(),
   });
 
-  const unreadCount = notifications.filter(n => n.isRead === 0).length;
+  const unreadCount = Array.isArray(notifications)
+    ? notifications.filter(n => n && Number(n.isRead) === 0).length
+    : 0;
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -62,6 +64,20 @@ export default function NotificationBell() {
     }
   };
 
+  const formatNotificationDate = (dateVal: any) => {
+    try {
+      if (!dateVal) return '';
+      const d = new Date(dateVal);
+      if (isNaN(d.getTime())) return '';
+      return `${d.toLocaleDateString('es-AR')} a las ${d.toLocaleTimeString('es-AR', {
+        hour: '2-digit',
+        minute: '2-digit',
+      })}`;
+    } catch {
+      return '';
+    }
+  };
+
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Bell Icon Trigger */}
@@ -104,39 +120,39 @@ export default function NotificationBell() {
 
             {/* List */}
             <div className="overflow-y-auto flex-1 divide-y divide-white/[0.04]">
-              {notifications.length === 0 ? (
+              {!Array.isArray(notifications) || notifications.length === 0 ? (
                 <div className="p-8 text-center text-white/30 text-xs">
                   <Bell size={20} className="mx-auto mb-2 text-white/10" />
                   No tenés notificaciones aún
                 </div>
               ) : (
-                notifications.map((n) => (
-                  <div
-                    key={n.id}
-                    className={`p-4 transition-colors flex items-start gap-3 hover:bg-white/[0.02] ${
-                      n.isRead === 0 ? 'bg-white/[0.01]' : ''
-                    }`}
-                  >
-                    <div className={`w-8 h-8 rounded-lg shrink-0 border flex items-center justify-center ${getBgColor(n.type)}`}>
-                      {getIcon(n.type)}
+                notifications.map((n) => {
+                  if (!n) return null;
+                  const isUnread = Number(n.isRead) === 0;
+                  return (
+                    <div
+                      key={n.id}
+                      className={`p-4 transition-colors flex items-start gap-3 hover:bg-white/[0.02] ${
+                        isUnread ? 'bg-white/[0.01]' : ''
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-lg shrink-0 border flex items-center justify-center ${getBgColor(n.type)}`}>
+                        {getIcon(n.type)}
+                      </div>
+                      <div className="space-y-0.5 flex-1 min-w-0">
+                        <p className={`text-xs font-semibold ${isUnread ? 'text-white' : 'text-white/60'} truncate`}>
+                          {n.title}
+                        </p>
+                        <p className="text-[11px] text-white/40 leading-relaxed">
+                          {n.message}
+                        </p>
+                        <p className="text-[8px] text-white/20 mt-1">
+                          {formatNotificationDate(n.createdAt)}
+                        </p>
+                      </div>
                     </div>
-                    <div className="space-y-0.5 flex-1 min-w-0">
-                      <p className={`text-xs font-semibold ${n.isRead === 0 ? 'text-white' : 'text-white/60'} truncate`}>
-                        {n.title}
-                      </p>
-                      <p className="text-[11px] text-white/40 leading-relaxed">
-                        {n.message}
-                      </p>
-                      <p className="text-[8px] text-white/20 mt-1">
-                        {new Date(n.createdAt).toLocaleDateString('es-AR')} a las{' '}
-                        {new Date(n.createdAt).toLocaleTimeString('es-AR', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </motion.div>
