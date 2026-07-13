@@ -186,7 +186,7 @@ export default function Quotes() {
       </div>
 
       {/* Tabs */}
-      <div className="flex p-1 rounded-xl bg-[#1A1A1A] border border-white/[0.06] mb-6">
+      <div className="flex p-1 rounded-xl glass mb-6">
         <button
           onClick={() => setActiveTab('market')}
           className={`flex-1 py-2.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-2 ${
@@ -220,7 +220,7 @@ export default function Quotes() {
             className="space-y-6"
           >
             {/* Live Ticker */}
-            <div className="p-5 rounded-2xl bg-[#111] border border-white/[0.06]">
+            <div className="p-5 rounded-2xl glass-card">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xs font-bold uppercase tracking-wider text-white/40 flex items-center gap-1.5">
                   <Coins size={14} className="text-[#FF2D92]" /> Cotizaciones en Tiempo Real
@@ -255,7 +255,7 @@ export default function Quotes() {
             </div>
 
             {/* Portfolio Simulator */}
-            <div className="p-5 rounded-2xl bg-[#111] border border-white/[0.06] space-y-4">
+            <div className="p-5 rounded-2xl glass-card space-y-4">
               <div className="flex items-center gap-2">
                 <Wallet size={16} className="text-[#8B5CF6]" />
                 <h2 className="text-xs font-bold uppercase tracking-wider text-white/40">Simulador de Portafolios</h2>
@@ -267,7 +267,7 @@ export default function Quotes() {
                   type="number"
                   value={simulationAmount}
                   onChange={e => setSimulationAmount(Math.max(100, Number(e.target.value)))}
-                  className="w-full mt-1.5 px-4 py-3 bg-[#1A1A1A] border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:border-[#FF2D92]"
+                  className="w-full mt-1.5 px-4 py-3 glass rounded-xl text-sm text-white focus:outline-none focus:border-[#FF2D92] transition-colors"
                 />
               </div>
 
@@ -333,7 +333,9 @@ export default function Quotes() {
             className="space-y-6"
           >
             {/* Status Card */}
-            <div className={`p-6 rounded-2xl ${c.bg} border border-white/[0.08]`}>
+            <div className="p-6 rounded-2xl glass border border-white/[0.08] relative overflow-hidden">
+              <div className="absolute inset-0" style={{ background: `radial-gradient(circle at top left, ${c.bg.replace('bg-[', '').replace(']/10', '')}, transparent 70%)` }} />
+              <div className="relative">
               <div className="flex items-center gap-3 mb-4">
                 <div className={`w-12 h-12 rounded-xl ${c.bg} flex items-center justify-center`}>
                   <StatusIcon size={24} className={c.color} />
@@ -358,6 +360,7 @@ export default function Quotes() {
                 </div>
               </div>
             </div>
+          </div>
 
             {/* Daily Quote */}
             {dailyQuote && (

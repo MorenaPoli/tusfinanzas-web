@@ -44,7 +44,7 @@ export default function Goals() {
   const progress = totalTarget > 0 ? (totalCurrent / totalTarget) * 100 : 0;
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] px-6 py-6">
+    <div className="min-h-screen bg-transparent px-6 py-6">
       <div className="max-w-lg mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -62,7 +62,7 @@ export default function Goals() {
 
         {/* Progress */}
         {goals && goals.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 p-5 rounded-2xl bg-[#1A1A1A] border border-white/[0.06]">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 p-5 rounded-2xl glass-card">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs text-white/40">Progreso general</span>
               <span className="text-xs font-semibold text-[#FF2D92]">{progress.toFixed(0)}%</span>
@@ -72,7 +72,7 @@ export default function Goals() {
                 initial={{ width: 0 }} animate={{ width: `${Math.min(progress, 100)}%` }} transition={{ duration: 1 }} />
             </div>
             <p className="text-xs text-white/30 mt-2">
-              ${totalCurrent.toLocaleString('en-US')} de ${totalTarget.toLocaleString('en-US')} meta
+              ${totalCurrent.toLocaleString('en-US')} de ${totalTarget.toLocaleString('en-US')} de meta
             </p>
           </motion.div>
         )}
@@ -82,29 +82,29 @@ export default function Goals() {
           {showForm && (
             <motion.form initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
               onSubmit={handleSubmit} className="overflow-hidden mb-6 space-y-3">
-              <div className="p-5 rounded-2xl bg-[#1A1A1A] border border-white/[0.06] space-y-3">
+              <div className="p-5 rounded-2xl glass-card space-y-3">
                 <input type="text" value={name} onChange={e => setName(e.target.value)}
                   placeholder="Nombre de la meta (ej: Auto nuevo)"
-                  className="w-full px-4 py-3 bg-[#111] border border-white/[0.08] rounded-xl text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF2D92]"
+                  className="w-full px-4 py-3 glass rounded-xl text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF2D92] transition-colors"
                   required />
                 <div className="flex gap-3">
                   <input type="number" value={target} onChange={e => setTarget(e.target.value)}
                     placeholder="Monto meta ($)" min="1"
-                    className="flex-1 px-4 py-3 bg-[#111] border border-white/[0.08] rounded-xl text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF2D92]"
+                    className="flex-1 px-4 py-3 glass rounded-xl text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF2D92] transition-colors"
                     required />
                   <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)}
-                    className="flex-1 px-4 py-3 bg-[#111] border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:border-[#FF2D92]" />
+                    className="flex-1 px-4 py-3 glass rounded-xl text-sm text-white focus:outline-none focus:border-[#FF2D92] transition-colors" />
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {GOAL_ICONS.map(i => (
                     <button key={i} type="button" onClick={() => setIcon(i)}
-                      className={`w-8 h-8 rounded-lg text-sm ${icon === i ? 'bg-[#FF2D92]/20 border border-[#FF2D92]' : 'bg-white/[0.05] border border-transparent'} transition-colors`}>
+                      className={`w-8 h-8 rounded-lg text-sm transition-all ${icon === i ? 'bg-[#FF2D92]/20 border border-[#FF2D92] shadow-sm' : 'glass hover:bg-white/10'}`}>
                       {i}
                     </button>
                   ))}
                 </div>
                 <button type="submit"
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] text-white font-semibold text-sm">
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] text-white font-semibold text-sm shadow-md shadow-[#FF2D92]/10">
                   Crear meta
                 </button>
               </div>
@@ -135,7 +135,7 @@ export default function Goals() {
               const pct = Math.min(100, (parseFloat(g.currentAmount) / parseFloat(g.targetAmount)) * 100);
               return (
                 <motion.div key={g.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                  className="p-4 rounded-2xl bg-[#1A1A1A] border border-white/[0.06]">
+                  className="p-4 rounded-2xl glass-card">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">{g.icon}</span>
@@ -147,7 +147,7 @@ export default function Goals() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <input type="number" placeholder="+ Aportar $" className="w-24 px-2.5 py-1 bg-[#111] border border-white/[0.08] rounded-xl text-[10px] text-white focus:outline-none focus:border-[#FF2D92]"
+                      <input type="number" placeholder="+ Aportar $" className="w-24 px-2.5 py-1 glass rounded-xl text-[10px] text-white focus:outline-none focus:border-[#FF2D92] transition-colors animate-pulse-slow"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             const val = parseFloat(e.currentTarget.value);

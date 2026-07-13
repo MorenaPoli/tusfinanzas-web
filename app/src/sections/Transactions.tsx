@@ -277,7 +277,7 @@ export default function Transactions() {
               {filters.map(f => (
                 <button key={f.key} onClick={() => setFilter(f.key)}
                   className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${
-                    filter === f.key ? 'bg-[#FF2D92] border-[#FF2D92] text-white' : 'bg-[#1A1A1A] border-white/[0.08] text-white/40'
+                    filter === f.key ? 'bg-[#FF2D92] border-[#FF2D92] text-white shadow-md shadow-[#FF2D92]/20' : 'glass text-white/40 hover:text-white/60'
                   }`}>
                   {f.label}
                 </button>
@@ -291,7 +291,7 @@ export default function Transactions() {
       <div
         onDragOver={(e) => e.preventDefault()}
         onDrop={handleFileDrop}
-        className="relative group p-6 mb-6 rounded-2xl border-2 border-dashed border-white/[0.08] hover:border-[#8B5CF6]/50 bg-[#111] hover:bg-[#8B5CF6]/5 transition-all text-center cursor-pointer"
+        className="relative group p-6 mb-6 rounded-2xl border border-dashed border-white/[0.1] hover:border-[#8B5CF6]/50 glass-card hover:bg-[#8B5CF6]/5 text-center cursor-pointer glow-purple"
       >
         <input
           type="file"
@@ -334,7 +334,7 @@ export default function Transactions() {
                 }).map(t => {
                   const dateStr = getDateStr(t.date);
                   return (
-                    <motion.div key={t.id} layout className="flex items-center justify-between p-4 rounded-2xl bg-[#1A1A1A] border border-white/[0.04]">
+                    <motion.div key={t.id} layout className="flex items-center justify-between p-4 rounded-2xl glass-card">
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                           t.type === 'income' ? 'bg-[#00E5FF]/10' :
@@ -385,12 +385,12 @@ export default function Transactions() {
       {/* Import Modal */}
       <AnimatePresence>
         {importing && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-2xl bg-[#111] border border-white/[0.08] rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]"
+              className="w-full max-w-2xl glass-strong rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh] glow-purple"
             >
               {/* Modal Header */}
               <div className="p-6 border-b border-white/[0.08] flex items-center justify-between">
@@ -421,18 +421,18 @@ export default function Transactions() {
                 ) : (
                   <>
                     {/* Settings row */}
-                    <div className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.02] border border-white/[0.04]">
+                    <div className="flex items-center justify-between p-4 rounded-2xl glass">
                       <div>
                         <p className="text-xs font-bold text-white">Divisa de Importación</p>
                         <p className="text-[10px] text-white/30">Se aplicará a todos los movimientos importados</p>
                       </div>
-                      <div className="flex gap-1.5 p-0.5 rounded-lg bg-[#1A1A1A] border border-white/[0.06]">
+                      <div className="flex gap-1.5 p-0.5 rounded-lg glass">
                         {['USD', 'ARS', 'MXN', 'EUR'].map(curr => (
                           <button
                             key={curr}
                             onClick={() => setImportCurrency(curr)}
                             className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all ${
-                              importCurrency === curr ? 'bg-[#8B5CF6] text-white' : 'text-white/40 hover:text-white'
+                              importCurrency === curr ? 'bg-[#8B5CF6] text-white shadow-sm shadow-[#8B5CF6]/30' : 'text-white/40 hover:text-white'
                             }`}
                           >
                             {curr}
@@ -455,7 +455,7 @@ export default function Transactions() {
                                 newRows[idx].date = e.target.value;
                                 setParsedRows(newRows);
                               }}
-                              className="w-full bg-[#1A1A1A] border border-white/[0.08] px-2 py-1.5 rounded-lg text-[11px] text-white/80 focus:outline-none"
+                              className="w-full glass border border-white/[0.08] px-2 py-1.5 rounded-lg text-[11px] text-white/80 focus:outline-none focus:border-[#8B5CF6] transition-colors"
                             />
                           </div>
                           <div className="md:col-span-3 flex flex-col gap-1">
@@ -468,7 +468,7 @@ export default function Transactions() {
                                 newRows[idx].description = e.target.value;
                                 setParsedRows(newRows);
                               }}
-                              className="w-full bg-[#1A1A1A] border border-white/[0.08] px-2 py-1.5 rounded-lg text-[11px] text-white/80 focus:outline-none truncate"
+                              className="w-full glass border border-white/[0.08] px-2 py-1.5 rounded-lg text-[11px] text-white/80 focus:outline-none focus:border-[#8B5CF6] transition-colors truncate"
                             />
                           </div>
                           <div className="md:col-span-2 flex flex-col gap-1">
@@ -481,7 +481,7 @@ export default function Transactions() {
                                 newRows[idx].amount = parseFloat(e.target.value) || 0;
                                 setParsedRows(newRows);
                               }}
-                              className="w-full bg-[#1A1A1A] border border-white/[0.08] px-2 py-1.5 rounded-lg text-[11px] text-white font-bold focus:outline-none"
+                              className="w-full glass border border-white/[0.08] px-2 py-1.5 rounded-lg text-[11px] text-white font-bold focus:outline-none focus:border-[#8B5CF6] transition-colors"
                             />
                           </div>
                           <div className="md:col-span-2 flex flex-col gap-1">
@@ -493,7 +493,7 @@ export default function Transactions() {
                                 newRows[idx].type = e.target.value as any;
                                 setParsedRows(newRows);
                               }}
-                              className="w-full bg-[#1A1A1A] border border-white/[0.08] px-2 py-1.5 rounded-lg text-[11px] text-white focus:outline-none"
+                              className="w-full glass border border-white/[0.08] px-2 py-1.5 rounded-lg text-[11px] text-white focus:outline-none focus:border-[#8B5CF6] transition-colors"
                             >
                               <option value="income">Ingreso</option>
                               <option value="expense">Gasto</option>
@@ -512,7 +512,7 @@ export default function Transactions() {
                                 newRows[idx].category = e.target.value;
                                 setParsedRows(newRows);
                               }}
-                              className="w-full bg-[#1A1A1A] border border-white/[0.08] px-2 py-1.5 rounded-lg text-[11px] text-white focus:outline-none"
+                              className="w-full glass border border-white/[0.08] px-2 py-1.5 rounded-lg text-[11px] text-white focus:outline-none focus:border-[#8B5CF6] transition-colors"
                               placeholder="Categoría"
                             />
                           </div>

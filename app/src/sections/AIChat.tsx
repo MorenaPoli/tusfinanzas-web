@@ -174,9 +174,9 @@ export default function AIChat() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] flex flex-col">
+    <div className="min-h-screen bg-transparent flex flex-col">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-[#0A0A0A]/80 backdrop-blur-2xl border-b border-white/[0.06]">
+      <div className="sticky top-0 z-40 bg-[#080810]/40 backdrop-blur-2xl border-b border-white/[0.06]">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => navigate('/dashboard')} className="p-2 -ml-2 rounded-xl hover:bg-white/5 transition-colors">
@@ -220,8 +220,8 @@ export default function AIChat() {
               {/* Financial Summary */}
               {(ctx.income > 0 || ctx.expense > 0) && (
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-                  className="mb-8 p-5 rounded-2xl bg-white/[0.03] border border-white/[0.08] text-left max-w-sm mx-auto">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[#FF2D92] mb-4">Tu situacion actual</p>
+                  className="mb-8 p-5 rounded-2xl glass-card text-left max-w-sm mx-auto">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[#FF2D92] mb-4">Tu situación actual</p>
                   <div className="grid grid-cols-2 gap-4">
                     {ctx.income > 0 && <FinItem icon={TrendingUp} color="#00E5FF" label="Ingresos" value={ctx.income} />}
                     {ctx.expense > 0 && <FinItem icon={Wallet} color="#FF4D6A" label="Gastos" value={ctx.expense} />}
@@ -260,8 +260,8 @@ export default function AIChat() {
                     )}
                     <div className={`max-w-[80%] p-4 rounded-2xl text-sm leading-relaxed whitespace-pre-line ${
                       msg.role === 'assistant'
-                        ? 'bg-white/[0.04] border border-white/[0.08] text-white/80'
-                        : 'bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] text-white'
+                        ? 'glass text-white/80'
+                        : 'bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] text-white shadow-md'
                     }`}>
                       {formatMessageContent(msg.content)}
                     </div>
@@ -287,12 +287,12 @@ export default function AIChat() {
       </div>
 
       {/* Input */}
-      <div className="shrink-0 px-6 pb-6 pt-3 bg-gradient-to-t from-[#0A0A0A]">
+      <div className="shrink-0 px-6 pb-6 pt-3 bg-gradient-to-t from-[#080810]/80 to-transparent">
         <div className="max-w-4xl mx-auto">
           {isFree && messages.length > 0 && (
             <div className="flex items-center justify-between mb-2 px-2">
               <span className="text-[10px] text-white/20">
-                {freeChatBlocked ? 'Limite diario alcanzado' : `${freeChatRemaining} mensajes gratis hoy`}
+                {freeChatBlocked ? 'Límite diario alcanzado' : `${freeChatRemaining} mensajes gratis hoy`}
               </span>
               {freeChatBlocked && (
                 <button onClick={() => navigate('/checkout')} className="text-[10px] text-[#FF2D92] hover:underline">
@@ -305,14 +305,14 @@ export default function AIChat() {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-5 rounded-2xl bg-gradient-to-br from-[#FF2D92]/10 to-[#8B5CF6]/5 border border-[#FF2D92]/20 text-center space-y-3 shadow-[0_0_30px_rgba(255,45,146,0.1)] backdrop-blur-md"
+              className="p-5 rounded-2xl glass-strong text-center space-y-3 shadow-[0_0_30px_rgba(255,45,146,0.15)] glow-pink"
             >
               <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] flex items-center justify-center mx-auto shadow-md">
                 <Crown size={18} className="text-white animate-bounce" />
               </div>
               <div>
                 <p className="text-sm font-bold text-white">¡Límite de Consultas Alcanzado!</p>
-                <p className="text-xs text-white/40 mt-1">Has consumido tus 100 mensajes diarios del plan gratuito. Pásate al plan Pro para chatear de forma ilimitada con tu experto IA.</p>
+                <p className="text-xs text-white/40 mt-1">Has consumido tus mensajes diarios del plan gratuito. Pásate al plan Pro para chatear de forma ilimitada con tu experto IA.</p>
               </div>
               <button onClick={() => navigate('/checkout')} className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] text-white font-semibold text-xs shadow-lg hover:opacity-90 transition-opacity">
                 Suscribirme a PRO
@@ -323,11 +323,11 @@ export default function AIChat() {
               <input type="text" value={input} onChange={e => setInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
                 placeholder={`Preguntame sobre finanzas en ${ctx.country}...`}
-                className="flex-1 px-5 py-4 bg-[#1A1A1A] border border-white/[0.08] rounded-full text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#8B5CF6] transition-colors"
+                className="flex-1 px-5 py-4 glass rounded-full text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#8B5CF6] transition-colors"
                 disabled={isLoading} />
               <motion.button whileTap={{ scale: 0.9 }} onClick={handleSend} disabled={!input.trim() || isLoading}
                 className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
-                  input.trim() ? 'bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] shadow-[0_0_20px_rgba(255,45,146,0.3)]' : 'bg-white/[0.05]'
+                  input.trim() ? 'bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] shadow-[0_0_20px_rgba(255,45,146,0.3)]' : 'glass text-white/30'
                 }`}>
                 <Send size={18} className={input.trim() ? 'text-white' : 'text-white/30'} />
               </motion.button>

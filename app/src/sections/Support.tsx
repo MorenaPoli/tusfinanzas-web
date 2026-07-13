@@ -64,7 +64,7 @@ export default function Support() {
   ];
 
   return (
-    <div className="max-w-2xl mx-auto px-6 pt-6 pb-20">
+    <div className="max-w-2xl mx-auto px-6 pt-6 pb-20 bg-transparent">
       <div className="flex items-center gap-3 mb-8">
         <button onClick={() => navigate('/dashboard')} className="p-2 -ml-2 rounded-xl hover:bg-white/5 transition-colors">
           <ArrowLeft size={20} className="text-white/60" />
@@ -75,17 +75,20 @@ export default function Support() {
       {/* Contact cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="p-5 rounded-2xl bg-gradient-to-br from-[#FF2D92]/10 to-[#8B5CF6]/5 border border-[#FF2D92]/10">
-          <MessageCircle size={24} className="text-[#FF2D92] mb-3" />
-          <h3 className="font-semibold text-sm mb-1">Chat con soporte</h3>
-          <p className="text-xs text-white/40 mb-3">Responde en menos de 24 horas</p>
-          <button onClick={() => navigate('/chat')} className="text-xs text-[#FF2D92] font-medium hover:underline">
-            Ir al chat →
-          </button>
+          className="p-5 rounded-2xl glass-strong border border-[#FF2D92]/25 glow-pink relative overflow-hidden">
+          <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at top left, rgba(255,45,146,0.12) 0%, transparent 60%)' }} />
+          <div className="relative">
+            <MessageCircle size={24} className="text-[#FF2D92] mb-3" />
+            <h3 className="font-semibold text-sm mb-1">Chat con soporte</h3>
+            <p className="text-xs text-white/40 mb-3">Responde en menos de 24 horas</p>
+            <button onClick={() => navigate('/chat')} className="text-xs text-[#FF2D92] font-medium hover:underline">
+              Ir al chat →
+            </button>
+          </div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity:1, y:0 }} transition={{ delay: 0.15 }}
-          className="p-5 rounded-2xl bg-[#1A1A1A] border border-white/[0.06]">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+          className="p-5 rounded-2xl glass-card">
           <Mail size={24} className="text-[#8B5CF6] mb-3" />
           <h3 className="font-semibold text-sm mb-1">Email</h3>
           <p className="text-xs text-white/40 mb-3">soporte@iafinanzas.app</p>
@@ -108,12 +111,12 @@ export default function Support() {
           {showForm && (
             <motion.form initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
               onSubmit={handleCreateTicket} className="overflow-hidden mb-4 space-y-3">
-              <div className="p-5 rounded-2xl bg-[#1A1A1A] border border-white/[0.06] space-y-3">
+              <div className="p-5 rounded-2xl glass-card space-y-3">
                 <div>
                   <label className="text-[10px] text-white/40 uppercase font-semibold">Asunto</label>
                   <input type="text" value={subject} onChange={e => setSubject(e.target.value)}
                     placeholder="Ej: Error al procesar pago"
-                    className="w-full mt-1 px-4 py-3 bg-[#111] border border-white/[0.08] rounded-xl text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF2D92]"
+                    className="w-full mt-1 px-4 py-3 glass rounded-xl text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF2D92] transition-colors"
                     required minLength={5} maxLength={200} />
                 </div>
                 <div>
@@ -121,11 +124,11 @@ export default function Support() {
                   <textarea value={message} onChange={e => setMessage(e.target.value)}
                     placeholder="Describe detalladamente el inconveniente para que podamos ayudarte..."
                     rows={4}
-                    className="w-full mt-1 px-4 py-3 bg-[#111] border border-white/[0.08] rounded-xl text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF2D92] resize-none"
+                    className="w-full mt-1 px-4 py-3 glass rounded-xl text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF2D92] resize-none transition-colors"
                     required minLength={10} maxLength={5000} />
                 </div>
                 <button type="submit" disabled={submitting}
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] text-white font-semibold text-sm disabled:opacity-50">
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] text-white font-semibold text-sm disabled:opacity-50 shadow-md">
                   {submitting ? 'Enviando...' : 'Enviar Ticket'}
                 </button>
               </div>
@@ -139,7 +142,7 @@ export default function Support() {
             <div className="w-6 h-6 border-2 border-[#FF2D92] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : !tickets || tickets.length === 0 ? (
-          <div className="p-6 rounded-2xl bg-[#1A1A1A] border border-white/[0.04] text-center">
+          <div className="p-6 rounded-2xl glass-card text-center">
             <Ticket size={24} className="text-white/10 mx-auto mb-2" />
             <p className="text-xs text-white/30 mb-3">No tenés tickets activos.</p>
             <button
@@ -152,7 +155,7 @@ export default function Support() {
         ) : (
           <div className="space-y-3">
             {tickets.map((t) => (
-              <div key={t.id} className="p-4 rounded-xl bg-[#1A1A1A] border border-white/[0.04] flex items-start justify-between gap-4">
+              <div key={t.id} className="p-4 rounded-xl glass-card flex items-start justify-between gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-semibold text-white/80">{t.subject}</span>
@@ -185,16 +188,16 @@ export default function Support() {
 
       {/* Quick help */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mb-8">
-        <h2 className="text-sm font-semibold text-white/60 mb-4">Temas rapidos</h2>
+        <h2 className="text-sm font-semibold text-white/60 mb-4">Temas rápidos</h2>
         <div className="grid grid-cols-2 gap-3">
           {[
-            { icon: HelpCircle, label: 'Como empezar', action: () => navigate('/dashboard') },
+            { icon: HelpCircle, label: 'Cómo empezar', action: () => navigate('/dashboard') },
             { icon: Lightbulb, label: 'Consejos de ahorro', action: () => navigate('/chat') },
             { icon: Bug, label: 'Reportar un problema', action: () => navigate('/chat') },
             { icon: MessageCircle, label: 'Preguntar a la IA', action: () => navigate('/chat') },
           ].map((item) => (
             <button key={item.label} onClick={item.action}
-              className="p-4 rounded-xl bg-[#1A1A1A] border border-white/[0.06] hover:border-white/[0.1] transition-all text-left">
+              className="p-4 rounded-xl glass-card transition-all text-left">
               <item.icon size={18} className="text-[#FF2D92] mb-2" />
               <p className="text-xs font-medium">{item.label}</p>
             </button>
@@ -208,7 +211,7 @@ export default function Support() {
         <div className="space-y-3">
           {faqs.map((faq, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.05 }}
-              className="p-4 rounded-xl bg-[#1A1A1A] border border-white/[0.04]">
+              className="p-4 rounded-xl glass-card">
               <p className="text-sm font-medium mb-1">{faq.q}</p>
               <p className="text-xs text-white/50 leading-relaxed">{faq.a}</p>
             </motion.div>
