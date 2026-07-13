@@ -59,12 +59,12 @@ export default function Layout() {
 
   const isActive = (path: string) => location.pathname === path;
 
-  const renderedTickers = (
+  const renderTickers = (keyPrefix: string) => (
     <div className="animate-marquee flex items-center gap-12 whitespace-nowrap">
       {tickerAssets.map((asset, i) => {
         const up = asset.change >= 0;
         return (
-          <div key={`${asset.symbol}-${i}`} className="flex items-center gap-2">
+          <div key={`${keyPrefix}-${asset.symbol}-${i}`} className="flex items-center gap-2">
             <span className="font-bold text-white/40">{asset.symbol}</span>
             <span className="font-extrabold text-white/80">${asset.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             <span className={`font-bold px-1.5 py-0.5 rounded text-[9px] ${up ? 'text-[#10B981] bg-[#10B981]/10' : 'text-[#FF4D6A] bg-[#FF4D6A]/10'}`}>
@@ -81,9 +81,9 @@ export default function Layout() {
       {/* Ticker Marquee */}
       <div className="w-full h-8 bg-black/50 backdrop-blur-md border-b border-white/[0.04] overflow-hidden flex items-center z-50 select-none">
         <div className="flex w-full overflow-hidden">
-          {renderedTickers}
-          {renderedTickers}
-          {renderedTickers}
+          {renderTickers('m1')}
+          {renderTickers('m2')}
+          {renderTickers('m3')}
         </div>
       </div>
 
@@ -209,18 +209,7 @@ export default function Layout() {
 
       {/* Main Content */}
       <main className="flex-1 min-h-screen pb-24 lg:pb-0 relative z-10">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={location.pathname}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2, ease: "easeInOut" }}
-            className="w-full h-full"
-          >
-            <Outlet />
-          </motion.div>
-        </AnimatePresence>
+        <Outlet />
       </main>
 
       {/* Mobile Bottom Nav */}
