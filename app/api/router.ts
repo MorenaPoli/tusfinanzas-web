@@ -6,6 +6,8 @@ import { adminRouter } from "./admin-router";
 import { supportRouter } from "./support-router";
 import { goalsRouter } from "./goals-router";
 import { familyRouter } from "./family-router";
+import { notificationRouter } from "./notification-router";
+import { budgetRouter } from "./budget-router";
 import { createRouter, publicQuery } from "./middleware";
 
 export const appRouter = createRouter({
@@ -18,6 +20,8 @@ export const appRouter = createRouter({
   support: supportRouter,
   goals: goalsRouter,
   family: familyRouter,
+  notification: notificationRouter,
+  budget: budgetRouter,
 });
 
 export type AppRouter = typeof appRouter;

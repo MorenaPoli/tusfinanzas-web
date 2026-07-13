@@ -4,6 +4,7 @@ import { getDb } from "./queries/connection";
 import { transactions, dailyQuotes, chatMessages, subscriptions, savingsGoals, familyMemberships } from "@db/schema";
 import { eq, and, desc, sql, inArray } from "drizzle-orm";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { checkBudgetThresholds } from "./budget-router";
 
 let cachedRates: Record<string, number> | null = null;
 let lastRatesFetchTime = 0;
@@ -150,6 +151,10 @@ export const financeRouter = createRouter({
         currency: input.currency || "USD",
         date: new Date(input.date),
       });
+
+      if (input.type === "expense") {
+        await checkBudgetThresholds(db, userId, input.category);
+      }
 
       return { id: Number(result[0].insertId) };
     }),
@@ -709,6 +714,18 @@ ${input.rows.map((r, i) => `Índice ${i}: "${r.description}" (monto: ${r.amount}
       }));
 
       await db.insert(transactions).values(valuesToInsert);
+
+      // Check budget thresholds for each inserted expense category
+      const uniqueExpenseCategories = Array.from(
+        new Set(
+          valuesToInsert
+            .filter((tx) => tx.type === "expense")
+            .map((tx) => tx.category)
+        )
+      );
+      for (const cat of uniqueExpenseCategories) {
+        await checkBudgetThresholds(db, userId, cat);
+      }
 
       return { success: true, count: valuesToInsert.length };
     }),

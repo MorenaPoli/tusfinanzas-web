@@ -3,6 +3,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router'
 import { motion, AnimatePresence } from 'framer-motion'
 import { LayoutDashboard, ListPlus, Receipt, BarChart3, Sparkles, LogOut, HelpCircle, Target, Shield, LineChart, Users, Menu, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import NotificationBell from '@/components/NotificationBell'
 
 const NAV = [
   { path: '/dashboard', label: 'Inicio', icon: LayoutDashboard },
@@ -20,6 +21,14 @@ export default function Layout() {
   const { user, logout } = useAuth();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [tickerAssets, setTickerAssets] = useState([
+    { symbol: 'BTC', price: 92450.50, change: 1.45 },
+    { symbol: 'ETH', price: 3420.20, change: -0.85 },
+    { symbol: 'AAPL', price: 184.25, change: 0.32 },
+    { symbol: 'KO', price: 59.45, change: 0.12 },
+    { symbol: 'TSLA', price: 248.60, change: -2.15 },
+    { symbol: 'GLD', price: 218.40, change: 0.65 },
+  ]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -32,12 +41,55 @@ export default function Layout() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTickerAssets(prev => prev.map(asset => {
+        const factor = 1 + (Math.random() - 0.5) * 0.0006;
+        const newPrice = asset.price * factor;
+        const changeDiff = (factor - 1) * 100;
+        return {
+          ...asset,
+          price: newPrice,
+          change: asset.change + changeDiff,
+        };
+      }));
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
   const isActive = (path: string) => location.pathname === path;
 
+  const renderedTickers = (
+    <div className="animate-marquee flex items-center gap-12 whitespace-nowrap">
+      {tickerAssets.map((asset, i) => {
+        const up = asset.change >= 0;
+        return (
+          <div key={`${asset.symbol}-${i}`} className="flex items-center gap-2">
+            <span className="font-bold text-white/40">{asset.symbol}</span>
+            <span className="font-extrabold text-white/80">${asset.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            <span className={`font-bold px-1.5 py-0.5 rounded text-[9px] ${up ? 'text-[#10B981] bg-[#10B981]/10' : 'text-[#FF4D6A] bg-[#FF4D6A]/10'}`}>
+              {up ? '▲' : '▼'} {Math.abs(asset.change).toFixed(2)}%
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+
   return (
-    <div className="min-h-screen flex text-white overflow-x-hidden relative">
-      {/* Ambient Aurora Background */}
-      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none" style={{ background: '#080810' }}>
+    <div className="min-h-screen flex flex-col text-white overflow-x-hidden relative">
+      {/* Ticker Marquee */}
+      <div className="w-full h-8 bg-black/50 backdrop-blur-md border-b border-white/[0.04] overflow-hidden flex items-center z-50 select-none">
+        <div className="flex w-full overflow-hidden">
+          {renderedTickers}
+          {renderedTickers}
+          {renderedTickers}
+        </div>
+      </div>
+
+      <div className="flex-1 flex relative">
+        {/* Ambient Aurora Background */}
+        <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none" style={{ background: '#080810' }}>
         <div className="absolute top-[-15%] left-[-15%] w-[55%] h-[55%] rounded-full animate-float-slow transition-transform duration-1000 ease-out"
           style={{ 
             background: 'radial-gradient(ellipse, rgba(255,45,146,0.28) 0%, transparent 70%)', 
@@ -65,11 +117,14 @@ export default function Layout() {
       </div>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 h-screen sticky top-0 z-50 glass-strong border-r border-white/[0.06]">
-        {/* Logo */}
-        <div className="p-6 flex items-center gap-3">
-          <img src="/logo.jpg" alt="IAfinanzas" className="w-9 h-9 rounded-lg object-cover" />
-          <span className="font-bold text-lg tracking-tight">IAfinanzas</span>
+      <aside className="hidden lg:flex flex-col w-64 h-[calc(100vh-2rem)] sticky top-8 z-50 glass-strong border-r border-white/[0.06]">
+        {/* Logo & Notifications */}
+        <div className="p-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src="/logo.jpg" alt="IAfinanzas" className="w-9 h-9 rounded-lg object-cover" />
+            <span className="font-bold text-lg tracking-tight">IAfinanzas</span>
+          </div>
+          <NotificationBell />
         </div>
 
         {/* User */}
@@ -154,7 +209,18 @@ export default function Layout() {
 
       {/* Main Content */}
       <main className="flex-1 min-h-screen pb-24 lg:pb-0 relative z-10">
-        <Outlet />
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+            className="w-full h-full"
+          >
+            <Outlet />
+          </motion.div>
+        </AnimatePresence>
       </main>
 
       {/* Mobile Bottom Nav */}
@@ -279,5 +345,6 @@ export default function Layout() {
         )}
       </AnimatePresence>
     </div>
+  </div>
   );
 }

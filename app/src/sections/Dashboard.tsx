@@ -1,10 +1,12 @@
 import { useNavigate } from 'react-router'
 import { motion } from 'framer-motion'
-import { LogOut, Wallet, TrendingUp, TrendingDown, PiggyBank, Gem, CreditCard, Sparkles, Plus, Crown, AlertTriangle } from 'lucide-react'
+import { LogOut, Wallet, TrendingUp, TrendingDown, PiggyBank, Gem, CreditCard, Sparkles, Plus, Crown, AlertTriangle, Trash2 } from 'lucide-react'
 import { trpc } from '@/providers/trpc'
 import { useAuth } from '@/hooks/useAuth'
 import { useSubscription } from '@/hooks/useSubscription'
 import { useEffect, useMemo, useState } from 'react'
+import NotificationBell from '@/components/NotificationBell'
+import OnboardingTour from '@/components/OnboardingTour'
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
@@ -20,6 +22,33 @@ export default function Dashboard() {
   const { data: totals } = trpc.finance.getTotals.useQuery({ currency });
   const { data: transactions } = trpc.finance.listTransactions.useQuery();
   const { data: dailyQuote } = trpc.finance.getDailyQuote.useQuery();
+
+  const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
+  const [budgetCategory, setBudgetCategory] = useState('Comida');
+  const [budgetAmount, setBudgetAmount] = useState('');
+
+  const { data: budgetReport = [] } = trpc.budget.getBudgetReport.useQuery();
+
+  const setBudget = trpc.budget.set.useMutation({
+    onSuccess: () => {
+      utils.budget.getBudgetReport.invalidate();
+      setIsBudgetModalOpen(false);
+      setBudgetAmount('');
+    },
+  });
+
+  const deleteBudget = trpc.budget.delete.useMutation({
+    onSuccess: () => utils.budget.getBudgetReport.invalidate(),
+  });
+
+  const handleBudgetSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!budgetAmount.trim() || parseFloat(budgetAmount) <= 0) return;
+    setBudget.mutate({
+      category: budgetCategory,
+      amount: budgetAmount,
+    });
+  };
 
   const createQuote = trpc.finance.createDailyQuote.useMutation({
     onSuccess: () => utils.finance.getDailyQuote.invalidate(),
@@ -67,6 +96,7 @@ export default function Dashboard() {
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-white/40 hidden sm:inline">{user?.name || 'Usuario'}</span>
+          <NotificationBell />
           <button onClick={logout} className="p-2 rounded-xl hover:bg-white/5 transition-colors">
             <LogOut size={16} className="text-white/40" />
           </button>
@@ -260,6 +290,58 @@ export default function Dashboard() {
         </motion.div>
       )}
 
+      {/* Category Budgets Panel (Stage 8) */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-white/60">Presupuestos de Gastos</h2>
+          <button onClick={() => setIsBudgetModalOpen(true)} className="text-xs text-[#FF2D92] hover:underline flex items-center gap-1 font-semibold">
+            <Plus size={12} /> Gestionar
+          </button>
+        </div>
+
+        {budgetReport.length === 0 ? (
+          <div className="p-6 rounded-2xl glass-card text-center text-white/30 text-xs">
+            No definiste ningún presupuesto mensual por categoría aún.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {budgetReport.map((b) => {
+              const color = b.percent >= 100 ? '#FF4D6A' : b.percent >= 80 ? '#FFD166' : '#10B981';
+              const strokeDasharray = 2 * Math.PI * 20;
+              const strokeDashoffset = strokeDasharray - (Math.min(100, b.percent) / 100) * strokeDasharray;
+
+              return (
+                <div key={b.id} className="p-4 rounded-2xl glass-card flex items-center justify-between relative overflow-hidden">
+                  <div className="flex items-center gap-3">
+                    {/* SVG Circular Progress Ring */}
+                    <div className="relative w-12 h-12 shrink-0 flex items-center justify-center">
+                      <svg className="w-12 h-12 transform -rotate-90">
+                        <circle cx="24" cy="24" r="20" className="stroke-white/5 fill-transparent" strokeWidth="4.5" />
+                        <circle cx="24" cy="24" r="20" className="fill-transparent transition-all duration-500 ease-out" 
+                          strokeWidth="4.5" strokeDasharray={strokeDasharray} strokeDashoffset={strokeDashoffset}
+                          stroke={color} strokeLinecap="round" />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center text-[10px] font-extrabold" style={{ color }}>
+                        {Math.round(b.percent)}%
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold capitalize text-white">{b.category}</h3>
+                      <p className="text-[10px] text-white/40 font-medium">Gastado: ${b.spent.toLocaleString()} / ${b.limit.toLocaleString()}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Delete button */}
+                  <button onClick={() => deleteBudget.mutate({ id: b.id })} className="p-1.5 rounded-lg text-white/20 hover:text-white/50 hover:bg-white/5 transition-colors">
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* Recent Transactions */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-3">
@@ -305,6 +387,68 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Budget Management Glass Modal */}
+      <AnimatePresence>
+        {isBudgetModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-sm rounded-2xl glass-strong p-6 border border-white/[0.08] relative"
+            >
+              <h3 className="text-lg font-bold mb-1">Definir Presupuesto</h3>
+              <p className="text-xs text-white/40 mb-4">Controlá tus gastos mensuales por categoría</p>
+
+              <form onSubmit={handleBudgetSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-white/60 mb-1.5">Categoría</label>
+                  <select
+                    value={budgetCategory}
+                    onChange={(e) => setBudgetCategory(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl glass border border-white/[0.08] text-sm focus:outline-none focus:border-[#FF2D92]"
+                  >
+                    {['Comida', 'Transporte', 'Entretenimiento', 'Servicios', 'Salud', 'Educación', 'Otros'].map(cat => (
+                      <option key={cat} value={cat} className="bg-[#0A0A0A]">{cat}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-white/60 mb-1.5">Límite Mensual</label>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    placeholder="Ej: 50000"
+                    value={budgetAmount}
+                    onChange={(e) => setBudgetAmount(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl glass border border-white/[0.08] text-sm focus:outline-none focus:border-[#FF2D92] text-white"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsBudgetModalOpen(false)}
+                    className="px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-xs font-bold hover:bg-white/10 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] text-xs font-bold hover:opacity-90 transition-opacity"
+                  >
+                    Guardar
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      <OnboardingTour />
     </div>
   );
 }
