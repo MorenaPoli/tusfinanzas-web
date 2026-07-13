@@ -143,10 +143,10 @@ export default function AIChat() {
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, isLoading]);
 
-  const handleSend = () => {
-    if (!input.trim() || isLoading || freeChatBlocked) return;
-    const text = input.trim();
-    setInput('');
+  const handleSend = (customText?: string) => {
+    const text = (customText || input).trim();
+    if (!text || isLoading || freeChatBlocked) return;
+    if (!customText) setInput('');
     setIsLoading(true);
     
     // Add user message optimistically to the local state so the user sees it immediately
@@ -244,7 +244,7 @@ export default function AIChat() {
               <div className="flex flex-wrap gap-2 justify-center">
                 {quickPrompts.map((p, i) => (
                   <motion.button key={p} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 + i * 0.1 }}
-                    onClick={() => setInput(p)}
+                    onClick={() => handleSend(p)}
                     className="px-5 py-2.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-xs text-white/60 hover:bg-white/[0.1] hover:border-white/[0.15] transition-all">
                     {p}
                   </motion.button>

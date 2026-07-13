@@ -40,6 +40,7 @@ export default function Goals() {
   const [target, setTarget] = useState('');
   const [deadline, setDeadline] = useState('');
   const [icon, setIcon] = useState('🎯');
+  const [showKeypad, setShowKeypad] = useState(false);
 
   const handleSuggestGoal = () => {
     const randomGoal = SUGGESTED_GOALS[Math.floor(Math.random() * SUGGESTED_GOALS.length)];
@@ -50,6 +51,24 @@ export default function Goals() {
     const d = new Date();
     d.setMonth(d.getMonth() + 6);
     setDeadline(d.toISOString().split('T')[0]);
+  };
+
+  const handleContributionSubmit = (g: any, inputEl: HTMLInputElement) => {
+    const val = parseFloat(inputEl.value);
+    if (isNaN(val) || val <= 0) {
+      alert("Por favor, ingresa un monto válido mayor a 0.");
+      return;
+    }
+    const current = parseFloat(g.currentAmount);
+    const target = parseFloat(g.targetAmount);
+    const left = target - current;
+    if (val > left) {
+      alert(`El aporte supera el monto faltante. Lo máximo que podés aportar es $${left.toLocaleString()}.`);
+      return;
+    }
+    const newAmount = (current + val).toString();
+    updateProgress.mutate({ id: g.id, currentAmount: newAmount });
+    inputEl.value = '';
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -220,26 +239,28 @@ export default function Goals() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <input type="number" placeholder="+ Aportar $" className="w-28 px-3 py-1.5 glass rounded-xl text-xs text-white focus:outline-none focus:border-[#FF2D92] transition-colors animate-pulse-slow font-semibold animate-pulse-slow"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            const val = parseFloat(e.currentTarget.value);
-                            if (isNaN(val) || val <= 0) {
-                              alert("Por favor, ingresa un monto válido mayor a 0.");
-                              return;
+                      <div className="relative flex items-center">
+                        <input
+                          id={`contrib-input-${g.id}`}
+                          type="number"
+                          placeholder="+ Aportar $"
+                          className="w-24 pl-2.5 pr-7 py-1.5 glass rounded-xl text-xs text-white focus:outline-none focus:border-[#FF2D92] transition-colors font-semibold animate-pulse-slow"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              handleContributionSubmit(g, e.currentTarget);
                             }
-                            const current = parseFloat(g.currentAmount);
-                            const target = parseFloat(g.targetAmount);
-                            const left = target - current;
-                            if (val > left) {
-                              alert(`El aporte supera el monto faltante. Lo máximo que podés aportar es $${left.toLocaleString()}.`);
-                              return;
-                            }
-                            const newAmount = (current + val).toString();
-                            updateProgress.mutate({ id: g.id, currentAmount: newAmount });
-                            e.currentTarget.value = '';
-                          }
-                        }} />
+                          }}
+                        />
+                        <button
+                          onClick={() => {
+                            const el = document.getElementById(`contrib-input-${g.id}`) as HTMLInputElement;
+                            if (el) handleContributionSubmit(g, el);
+                          }}
+                          className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded-lg text-[#FF2D92] hover:bg-[#FF2D92]/10 transition-colors"
+                        >
+                          <Plus size={11} />
+                        </button>
+                      </div>
                       <button onClick={() => deleteGoal.mutate({ id: g.id })}
                         className="p-2 rounded-xl hover:bg-[#FF4D6A]/10 transition-colors">
                         <Trash2 size={16} className="text-white/30 hover:text-[#FF4D6A]" />

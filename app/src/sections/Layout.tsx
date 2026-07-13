@@ -64,13 +64,17 @@ export default function Layout() {
       {tickerAssets.map((asset, i) => {
         const up = asset.change >= 0;
         return (
-          <div key={`${keyPrefix}-${asset.symbol}-${i}`} className="flex items-center gap-2">
+          <button
+            key={`${keyPrefix}-${asset.symbol}-${i}`}
+            onClick={() => navigate('/quotes')}
+            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity active:scale-95 text-left focus:outline-none"
+          >
             <span className="font-bold text-white/40">{asset.symbol}</span>
             <span className="font-extrabold text-white/80">${asset.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             <span className={`font-bold px-1.5 py-0.5 rounded text-[9px] ${up ? 'text-[#10B981] bg-[#10B981]/10' : 'text-[#FF4D6A] bg-[#FF4D6A]/10'}`}>
               {up ? '▲' : '▼'} {Math.abs(asset.change).toFixed(2)}%
             </span>
-          </div>
+          </button>
         );
       })}
     </div>
