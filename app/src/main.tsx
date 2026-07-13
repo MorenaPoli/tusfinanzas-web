@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router'
 import './index.css'
 import { TRPCProvider } from "@/providers/trpc"
+import ErrorBoundary from '@/components/ErrorBoundary'
 import App from './App.tsx'
 
 // IAfinanzas v2 - force cache invalidation
@@ -12,7 +13,9 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <TRPCProvider>
-        <App />
+        <ErrorBoundary>
+          <App />
+        </ErrorBoundary>
       </TRPCProvider>
     </BrowserRouter>
   </StrictMode>,
