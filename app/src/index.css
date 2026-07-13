@@ -32,6 +32,47 @@
     --sidebar-accent-foreground: 0 0% 90%;
     --sidebar-border: 0 0% 14%;
     --sidebar-ring: 320 100% 58%;
+
+    --theme-glow: 255 45 146;
+    --theme-gradient-from: #FF2D92;
+    --theme-gradient-to: #8B5CF6;
+    --theme-accent: #FF2D92;
+  }
+
+  .theme-neon {
+    --primary: 320 100% 58%;
+    --ring: 320 100% 58%;
+    --theme-glow: 255 45 146;
+    --theme-gradient-from: #FF2D92;
+    --theme-gradient-to: #8B5CF6;
+    --theme-accent: #FF2D92;
+  }
+
+  .theme-emerald {
+    --primary: 150 100% 40%;
+    --ring: 150 100% 40%;
+    --theme-glow: 16 185 129;
+    --theme-gradient-from: #10B981;
+    --theme-gradient-to: #059669;
+    --theme-accent: #10B981;
+  }
+
+  .theme-sapphire {
+    --primary: 220 100% 60%;
+    --ring: 220 100% 60%;
+    --theme-glow: 59 130 246;
+    --theme-gradient-from: #3B82F6;
+    --theme-gradient-to: #6366F1;
+    --theme-accent: #3B82F6;
+  }
+
+  .theme-cyber {
+    --primary: 38 100% 50%;
+    --ring: 38 100% 50%;
+    --theme-glow: 245 158 11;
+    --theme-gradient-from: #F59E0B;
+    --theme-gradient-to: #EF4444;
+    --theme-accent: #F59E0B;
   }
 
   .dark {
@@ -242,3 +283,35 @@
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
 }
+
+/* Dynamic theme utilities */
+.bg-theme-gradient {
+  background: linear-gradient(135deg, var(--theme-gradient-from) 0%, var(--theme-gradient-to) 100%) !important;
+}
+.text-theme-gradient {
+  background: linear-gradient(135deg, var(--theme-gradient-from) 0%, var(--theme-gradient-to) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.border-theme-accent {
+  border-color: var(--theme-accent) !important;
+}
+.text-theme-accent {
+  color: var(--theme-accent) !important;
+}
+.bg-theme-accent-10 {
+  background-color: rgba(var(--theme-glow), 0.1) !important;
+}
+.bg-theme-accent-20 {
+  background-color: rgba(var(--theme-glow), 0.2) !important;
+}
+.shadow-theme-glow {
+  box-shadow: 0 0 20px rgba(var(--theme-glow), 0.25) !important;
+}
+.glow-theme {
+  box-shadow: 0 0 30px rgba(var(--theme-glow), 0.15) !important;
+}
+.focus-border-theme:focus {
+  border-color: var(--theme-accent) !important;
+}
+

@@ -1,17 +1,33 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Users, CreditCard, MessageSquare, TrendingUp, Shield } from 'lucide-react';
+import { ArrowLeft, Users, CreditCard, MessageSquare, TrendingUp, Shield, ChevronDown, ChevronUp } from 'lucide-react';
 import { trpc } from '@/providers/trpc';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function AdminPanel() {
   const navigate = useNavigate();
   const { isAdmin, isLoading } = useAuth();
+  const utils = trpc.useUtils();
 
   const { data: stats } = trpc.admin.getStats.useQuery(undefined, { enabled: isAdmin });
   const { data: users } = trpc.admin.listUsers.useQuery(undefined, { enabled: isAdmin });
   const { data: transactions } = trpc.admin.listTransactions.useQuery(undefined, { enabled: isAdmin });
   const { data: tickets } = trpc.admin.listTickets.useQuery(undefined, { enabled: isAdmin });
+
+  const [expandedTicketId, setExpandedTicketId] = useState<number | null>(null);
+  const [responseText, setResponseText] = useState('');
+
+  const respondTicket = trpc.admin.respondToTicket.useMutation({
+    onSuccess: () => {
+      utils.admin.listTickets.invalidate();
+      setResponseText('');
+      setExpandedTicketId(null);
+    },
+    onError: (err) => {
+      alert(err.message || "Error al enviar la respuesta.");
+    }
+  });
 
   if (isLoading) {
     return (
@@ -37,7 +53,7 @@ export default function AdminPanel() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] px-6 py-6">
+    <div className="min-h-screen bg-[#0A0A0A] px-6 py-6 pb-20">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
@@ -46,7 +62,7 @@ export default function AdminPanel() {
           </button>
           <div>
             <h1 className="text-xl font-bold">Panel de Admin</h1>
-            <p className="text-xs text-white/40">Gestion de usuarios y metricas</p>
+            <p className="text-xs text-white/40">Gestión de usuarios y métricas</p>
           </div>
         </div>
 
@@ -78,7 +94,7 @@ export default function AdminPanel() {
                     <th className="text-left px-4 py-3 text-xs text-white/40 font-medium">ID</th>
                     <th className="text-left px-4 py-3 text-xs text-white/40 font-medium">Nombre</th>
                     <th className="text-left px-4 py-3 text-xs text-white/40 font-medium">Email</th>
-                    <th className="text-left px-4 py-3 text-xs text-white/40 font-medium">Pais</th>
+                    <th className="text-left px-4 py-3 text-xs text-white/40 font-medium">País</th>
                     <th className="text-left px-4 py-3 text-xs text-white/40 font-medium">Rol</th>
                     <th className="text-left px-4 py-3 text-xs text-white/40 font-medium">Registro</th>
                   </tr>
@@ -103,7 +119,7 @@ export default function AdminPanel() {
                     </tr>
                   ))}
                   {(!users || users.length === 0) && (
-                    <tr><td colSpan={6} className="px-4 py-8 text-center text-white/30">Sin usuarios aun</td></tr>
+                    <tr><td colSpan={6} className="px-4 py-8 text-center text-white/30">Sin usuarios aún</td></tr>
                   )}
                 </tbody>
               </table>
@@ -113,7 +129,7 @@ export default function AdminPanel() {
 
         {/* Recent Transactions */}
         <div className="mb-8">
-          <h2 className="text-sm font-semibold text-white/60 mb-4">Ultimas transacciones</h2>
+          <h2 className="text-sm font-semibold text-white/60 mb-4">Últimas transacciones</h2>
           <div className="rounded-2xl bg-[#1A1A1A] border border-white/[0.06] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -121,7 +137,7 @@ export default function AdminPanel() {
                   <tr className="border-b border-white/[0.06]">
                     <th className="text-left px-4 py-3 text-xs text-white/40 font-medium">Usuario</th>
                     <th className="text-left px-4 py-3 text-xs text-white/40 font-medium">Tipo</th>
-                    <th className="text-left px-4 py-3 text-xs text-white/40 font-medium">Categoria</th>
+                    <th className="text-left px-4 py-3 text-xs text-white/40 font-medium">Categoría</th>
                     <th className="text-left px-4 py-3 text-xs text-white/40 font-medium">Monto</th>
                     <th className="text-left px-4 py-3 text-xs text-white/40 font-medium">Fecha</th>
                   </tr>
@@ -153,7 +169,7 @@ export default function AdminPanel() {
         </div>
 
         {/* Support Tickets */}
-        <div>
+        <div className="mb-8">
           <h2 className="text-sm font-semibold text-white/60 mb-4">Tickets de soporte</h2>
           <div className="rounded-2xl bg-[#1A1A1A] border border-white/[0.06] overflow-hidden">
             <div className="overflow-x-auto">
@@ -165,28 +181,94 @@ export default function AdminPanel() {
                     <th className="text-left px-4 py-3 text-xs text-white/40 font-medium">Asunto</th>
                     <th className="text-left px-4 py-3 text-xs text-white/40 font-medium">Estado</th>
                     <th className="text-left px-4 py-3 text-xs text-white/40 font-medium">Fecha</th>
+                    <th className="w-10"></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {tickets?.map((t) => (
-                    <tr key={t.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
-                      <td className="px-4 py-3 text-white/60">#{t.id}</td>
-                      <td className="px-4 py-3 text-white/60">{t.userEmail}</td>
-                      <td className="px-4 py-3 text-white">{t.subject}</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                          t.status === 'open' ? 'bg-[#FF4D6A]/10 text-[#FF4D6A]' :
-                          t.status === 'in_progress' ? 'bg-[#FFD166]/10 text-[#FFD166]' :
-                          'bg-[#10B981]/10 text-[#10B981]'
-                        }`}>{t.status}</span>
-                      </td>
-                      <td className="px-4 py-3 text-white/40 text-xs">
-                        {t.createdAt ? new Date(t.createdAt).toLocaleDateString('es-ES') : '-'}
-                      </td>
-                    </tr>
-                  ))}
+                  {tickets?.map((t) => {
+                    const isExpanded = expandedTicketId === t.id;
+                    return (
+                      <>
+                        <tr
+                          key={t.id}
+                          onClick={() => {
+                            setExpandedTicketId(isExpanded ? null : t.id);
+                            setResponseText('');
+                          }}
+                          className="border-b border-white/[0.04] hover:bg-white/[0.02] cursor-pointer"
+                        >
+                          <td className="px-4 py-3 text-white/60">#{t.id}</td>
+                          <td className="px-4 py-3 text-white/60">{t.userEmail}</td>
+                          <td className="px-4 py-3 text-white">{t.subject}</td>
+                          <td className="px-4 py-3">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                              t.status === 'open' ? 'bg-[#FF4D6A]/10 text-[#FF4D6A]' :
+                              t.status === 'in_progress' ? 'bg-[#FFD166]/10 text-[#FFD166]' :
+                              'bg-[#10B981]/10 text-[#10B981]'
+                            }`}>{t.status}</span>
+                          </td>
+                          <td className="px-4 py-3 text-white/40 text-xs">
+                            {t.createdAt ? new Date(t.createdAt).toLocaleDateString('es-ES') : '-'}
+                          </td>
+                          <td className="px-4 py-3 text-white/40">
+                            {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                          </td>
+                        </tr>
+                        {isExpanded && (
+                          <tr key={`${t.id}-expanded`} className="bg-white/[0.01] border-b border-white/[0.04]">
+                            <td colSpan={6} className="px-6 py-4 space-y-4">
+                              <div className="space-y-1">
+                                <p className="text-[10px] text-white/40 uppercase font-semibold">Mensaje del Usuario:</p>
+                                <p className="text-xs text-white/80 bg-[#121212] p-3 rounded-lg border border-white/[0.04] whitespace-pre-wrap">{t.message}</p>
+                              </div>
+                              
+                              {t.adminResponse ? (
+                                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.05] space-y-1">
+                                  <p className="text-[10px] text-[#10B981] font-bold uppercase tracking-wider">Respuesta Enviada:</p>
+                                  <p className="text-xs text-white/70 italic">&ldquo;{t.adminResponse}&rdquo;</p>
+                                </div>
+                              ) : (
+                                <div className="space-y-2 pt-2 border-t border-white/[0.03]">
+                                  <label className="text-[10px] text-white/40 uppercase font-semibold">Responder Ticket</label>
+                                  <textarea
+                                    value={responseText}
+                                    onChange={(e) => setResponseText(e.target.value)}
+                                    placeholder="Escribe la respuesta para el usuario..."
+                                    rows={3}
+                                    className="w-full px-3 py-2 bg-[#121212] border border-white/[0.08] focus:border-[#FF2D92] rounded-xl text-xs text-white focus:outline-none resize-none"
+                                  />
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (!responseText.trim()) return;
+                                        respondTicket.mutate({ id: t.id, response: responseText });
+                                      }}
+                                      disabled={respondTicket.isPending}
+                                      className="px-4 py-2 rounded-xl bg-[#10B981] text-white text-xs font-bold hover:bg-[#10B981]/90 active:scale-95 transition-all shadow-md"
+                                    >
+                                      Enviar Respuesta y Resolver
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setExpandedTicketId(null);
+                                      }}
+                                      className="px-4 py-2 rounded-xl bg-white/5 text-white/50 text-xs font-medium hover:bg-white/10 hover:text-white transition-all"
+                                    >
+                                      Cancelar
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        )}
+                      </>
+                    );
+                  })}
                   {(!tickets || tickets.length === 0) && (
-                    <tr><td colSpan={5} className="px-4 py-8 text-center text-white/30">Sin tickets</td></tr>
+                    <tr><td colSpan={6} className="px-4 py-8 text-center text-white/30">Sin tickets</td></tr>
                   )}
                 </tbody>
               </table>

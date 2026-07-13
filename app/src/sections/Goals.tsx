@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Plus, Target, Trash2, Calendar } from 'lucide-react';
+import { ArrowLeft, Plus, Target, Trash2, Calendar, Minus } from 'lucide-react';
 import { trpc } from '@/providers/trpc';
 import MiniKeypad from '@/components/MiniKeypad';
 
@@ -25,6 +25,27 @@ export default function Goals() {
   const utils = trpc.useUtils();
 
   const { data: goals, isLoading } = trpc.goals.list.useQuery();
+  const { data: transactions = [] } = trpc.finance.listTransactions.useQuery();
+
+  const averageMonthlySavings = useMemo(() => {
+    if (!transactions || transactions.length === 0) return 0;
+    
+    // Sum savings (income - expenses) for the last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const income30 = transactions
+      .filter(t => t.type === 'income' && new Date(t.date) >= thirtyDaysAgo)
+      .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+      
+    const expense30 = transactions
+      .filter(t => t.type === 'expense' && new Date(t.date) >= thirtyDaysAgo)
+      .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+      
+    const monthlySavings = income30 - expense30;
+    return Math.max(0, monthlySavings);
+  }, [transactions]);
+
   const createGoal = trpc.goals.create.useMutation({
     onSuccess: () => { utils.goals.list.invalidate(); setShowForm(false); },
   });
@@ -53,7 +74,7 @@ export default function Goals() {
     setDeadline(d.toISOString().split('T')[0]);
   };
 
-  const handleContributionSubmit = (g: any, inputEl: HTMLInputElement) => {
+  const handleContributionSubmit = (g: any, inputEl: HTMLInputElement, mode: 'deposit' | 'withdraw' = 'deposit') => {
     const val = parseFloat(inputEl.value);
     if (isNaN(val) || val <= 0) {
       alert("Por favor, ingresa un monto válido mayor a 0.");
@@ -61,13 +82,23 @@ export default function Goals() {
     }
     const current = parseFloat(g.currentAmount);
     const target = parseFloat(g.targetAmount);
-    const left = target - current;
-    if (val > left) {
-      alert(`El aporte supera el monto faltante. Lo máximo que podés aportar es $${left.toLocaleString()}.`);
-      return;
+
+    if (mode === 'deposit') {
+      const left = target - current;
+      if (val > left) {
+        alert(`El aporte supera el monto faltante. Lo máximo que podés aportar es $${left.toLocaleString()}.`);
+        return;
+      }
+      const newAmount = (current + val).toString();
+      updateProgress.mutate({ id: g.id, currentAmount: newAmount });
+    } else {
+      if (val > current) {
+        alert(`No podés retirar más de lo que tenés ahorrado. El monto máximo disponible es $${current.toLocaleString()}.`);
+        return;
+      }
+      const newAmount = (current - val).toString();
+      updateProgress.mutate({ id: g.id, currentAmount: newAmount });
     }
-    const newAmount = (current + val).toString();
-    updateProgress.mutate({ id: g.id, currentAmount: newAmount });
     inputEl.value = '';
   };
 
@@ -243,23 +274,36 @@ export default function Goals() {
                         <input
                           id={`contrib-input-${g.id}`}
                           type="number"
-                          placeholder="+ Aportar $"
-                          className="w-24 pl-2.5 pr-7 py-1.5 glass rounded-xl text-xs text-white focus:outline-none focus:border-[#FF2D92] transition-colors font-semibold animate-pulse-slow"
+                          placeholder="Monto $"
+                          className="w-24 pl-2.5 pr-14 py-1.5 glass rounded-xl text-xs text-white focus:outline-none focus:border-[#FF2D92] transition-colors font-semibold"
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
-                              handleContributionSubmit(g, e.currentTarget);
+                              handleContributionSubmit(g, e.currentTarget, 'deposit');
                             }
                           }}
                         />
-                        <button
-                          onClick={() => {
-                            const el = document.getElementById(`contrib-input-${g.id}`) as HTMLInputElement;
-                            if (el) handleContributionSubmit(g, el);
-                          }}
-                          className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded-lg text-[#FF2D92] hover:bg-[#FF2D92]/10 transition-colors"
-                        >
-                          <Plus size={11} />
-                        </button>
+                        <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+                          <button
+                            onClick={() => {
+                              const el = document.getElementById(`contrib-input-${g.id}`) as HTMLInputElement;
+                              if (el) handleContributionSubmit(g, el, 'deposit');
+                            }}
+                            className="p-1 rounded-lg text-[#FF2D92] hover:bg-[#FF2D92]/10 transition-colors"
+                            title="Aportar ahorro"
+                          >
+                            <Plus size={11} />
+                          </button>
+                          <button
+                            onClick={() => {
+                              const el = document.getElementById(`contrib-input-${g.id}`) as HTMLInputElement;
+                              if (el) handleContributionSubmit(g, el, 'withdraw');
+                            }}
+                            className="p-1 rounded-lg text-white/40 hover:text-white/80 hover:bg-white/5 transition-colors"
+                            title="Retirar ahorro"
+                          >
+                            <Minus size={11} />
+                          </button>
+                        </div>
                       </div>
                       <button onClick={() => deleteGoal.mutate({ id: g.id })}
                         className="p-2 rounded-xl hover:bg-[#FF4D6A]/10 transition-colors">
@@ -267,17 +311,59 @@ export default function Goals() {
                       </button>
                     </div>
                   </div>
-                  <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                   {/* Progress track with checkpoint milestones */}
+                  <div className="relative h-3.5 rounded-full bg-white/[0.06] overflow-visible my-4">
                     <div className="h-full rounded-full bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] transition-all" style={{ width: `${pct}%` }} />
+                    
+                    {[25, 50, 75].map((mile) => {
+                      const hit = pct >= mile;
+                      return (
+                        <div
+                          key={mile}
+                          className="absolute top-0 bottom-0 w-0.5"
+                          style={{ left: `${mile}%` }}
+                        >
+                          <div className={`w-full h-full ${hit ? 'bg-white/40' : 'bg-white/10'}`} />
+                          <span className={`text-[8px] absolute -bottom-4 left-1/2 -translate-x-1/2 font-extrabold tracking-tighter ${
+                            hit ? 'text-white/70' : 'text-white/30'
+                          }`}>
+                            {mile}%
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <div className="flex items-center justify-between mt-2.5">
-                    <span className="text-xs font-semibold text-[#FF2D92]">{pct.toFixed(0)}% completado</span>
+
+                  <div className="flex items-center justify-between mt-5">
+                    <span className="text-xs font-bold text-[#FF2D92]">{pct.toFixed(0)}% completado</span>
                     {g.deadline && (
-                      <span className="text-xs text-white/40 flex items-center gap-1.5">
+                      <span className="text-xs text-white/40 flex items-center gap-1.5 font-medium">
                         <Calendar size={12} className="text-white/30" /> {new Date(g.deadline).toLocaleDateString('es-ES')}
                       </span>
                     )}
                   </div>
+
+                  {/* Smart Savings Timeline Projections */}
+                  {(() => {
+                    const current = parseFloat(g.currentAmount);
+                    const target = parseFloat(g.targetAmount);
+                    const remaining = target - current;
+                    const monthsToTarget = averageMonthlySavings > 0 ? Math.ceil(remaining / averageMonthlySavings) : null;
+
+                    return (
+                      <div className="mt-3 pt-2.5 border-t border-white/[0.04] flex items-center justify-between text-[10px] text-white/40 font-medium">
+                        {monthsToTarget !== null ? (
+                          <span>
+                            Estimado: <strong className="text-[#00E5FF]">{monthsToTarget} {monthsToTarget === 1 ? 'mes' : 'meses'}</strong> para completar (ahorrando ${averageMonthlySavings.toLocaleString()}/mes)
+                          </span>
+                        ) : (
+                          <span className="text-white/30">
+                            Ahorrá regularmente para estimar la fecha del objetivo.
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </motion.div>
               );
             })}

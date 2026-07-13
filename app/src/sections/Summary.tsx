@@ -24,6 +24,8 @@ export default function Summary() {
     return aiMsgs.length > 0 ? aiMsgs[aiMsgs.length - 1].content : '';
   }, [dbMessages]);
 
+  const [hoveredSlice, setHoveredSlice] = useState<{ name: string; value: number; percent: number; color: string } | null>(null);
+
   const convertAmount = (amount: number, from: string, to: string, ratesMap?: Record<string, number>) => {
     if (!ratesMap) return amount;
     const f = from.toUpperCase();
@@ -184,32 +186,107 @@ export default function Summary() {
           )}
 
           {/* Category Pie */}
-          {monthData.categoryData.length > 0 && (
-            <div className="p-4 rounded-2xl bg-[#1A1A1A] border border-white/[0.06]">
-              <p className="text-xs text-white/40 mb-3">Gastos por categoria</p>
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie data={monthData.categoryData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value">
-                    {monthData.categoryData.map((_, i) => (
-                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip contentStyle={{ background: '#1A1A1A', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '12px' }} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="space-y-2 mt-2">
-                {monthData.categoryData.map((c, i) => (
-                  <div key={c.name} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                      <span className="text-xs text-white/60">{c.name}</span>
-                    </div>
-                    <span className="text-xs font-medium">${c.value.toLocaleString()}</span>
+          {monthData.categoryData.length > 0 && (() => {
+            const totalExpenses = monthData.categoryData.reduce((sum, c) => sum + c.value, 0);
+            return (
+              <div className="p-5 rounded-2xl bg-[#1A1A1A] border border-white/[0.06]">
+                <p className="text-xs text-white/40 mb-3 font-semibold uppercase tracking-wider">Gastos por categoría</p>
+                
+                {/* SVG Donut Ring */}
+                <div className="relative w-48 h-48 mx-auto flex items-center justify-center mb-4">
+                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
+                    {monthData.categoryData.map((slice, i) => {
+                      const percent = totalExpenses > 0 ? (slice.value / totalExpenses) * 100 : 0;
+                      const color = COLORS[i % COLORS.length];
+                      const r = 55;
+                      const c = 2 * Math.PI * r;
+                      const strokeDasharray = c;
+                      const strokeDashoffset = c - (percent / 100) * c;
+                      
+                      const previousPercentSum = monthData.categoryData
+                        .slice(0, i)
+                        .reduce((sum, s) => sum + (totalExpenses > 0 ? (s.value / totalExpenses) * 100 : 0), 0);
+                      const rotationAngle = (previousPercentSum * 360) / 100;
+
+                      return (
+                        <circle
+                          key={slice.name}
+                          cx="100"
+                          cy="100"
+                          r={r}
+                          fill="transparent"
+                          stroke={color}
+                          strokeWidth={hoveredSlice?.name === slice.name ? "24" : "18"}
+                          strokeDasharray={strokeDasharray}
+                          strokeDashoffset={strokeDashoffset}
+                          transform={`rotate(${rotationAngle} 100 100)`}
+                          className="transition-all duration-300 cursor-pointer origin-center"
+                          onMouseEnter={() => setHoveredSlice({ name: slice.name, value: slice.value, percent, color })}
+                          onMouseLeave={() => setHoveredSlice(null)}
+                        />
+                      );
+                    })}
+                  </svg>
+
+                  {/* Absolute Centered Tooltip */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none p-3">
+                    {hoveredSlice ? (
+                      <div className="space-y-0.5 animate-fade-in">
+                        <p className="text-[10px] uppercase font-black tracking-wider truncate max-w-[120px]" style={{ color: hoveredSlice.color }}>
+                          {hoveredSlice.name}
+                        </p>
+                        <p className="text-sm font-extrabold text-white">
+                          ${hoveredSlice.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        </p>
+                        <p className="text-[10px] font-semibold text-white/50">
+                          {hoveredSlice.percent.toFixed(1)}%
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-0.5">
+                        <p className="text-[9px] uppercase font-bold text-white/30 tracking-wider">
+                          Gastos
+                        </p>
+                        <p className="text-base font-black text-white">
+                          ${totalExpenses.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        </p>
+                        <p className="text-[9px] font-semibold text-white/40">
+                          {monthData.categoryData.length} Categorías
+                        </p>
+                      </div>
+                    )}
                   </div>
-                ))}
+                </div>
+
+                {/* Legend list */}
+                <div className="space-y-2 pt-2 border-t border-white/[0.04]">
+                  {monthData.categoryData.map((c, i) => {
+                    const percent = totalExpenses > 0 ? (c.value / totalExpenses) * 100 : 0;
+                    const isHovered = hoveredSlice?.name === c.name;
+                    return (
+                      <div
+                        key={c.name}
+                        className={`flex items-center justify-between p-1.5 rounded-lg transition-all ${
+                          isHovered ? 'bg-white/5' : ''
+                        }`}
+                        onMouseEnter={() => setHoveredSlice({ name: c.name, value: c.value, percent, color: COLORS[i % COLORS.length] })}
+                        onMouseLeave={() => setHoveredSlice(null)}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                          <span className="text-xs text-white/60 font-semibold">{c.name}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs font-bold text-white">${c.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                          <span className="text-[9px] text-white/30 ml-2 font-medium">({percent.toFixed(0)}%)</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       )}
 

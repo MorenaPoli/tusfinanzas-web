@@ -155,31 +155,39 @@ export default function Support() {
         ) : (
           <div className="space-y-3">
             {tickets.map((t) => (
-              <div key={t.id} className="p-4 rounded-xl glass-card flex items-start justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-white/80">{t.subject}</span>
-                    <span className={`px-2 py-0.5 rounded-full text-[8px] font-semibold uppercase tracking-wider ${
-                      t.status === 'open' ? 'bg-[#FFD166]/10 text-[#FFD166]' :
-                      t.status === 'in_progress' ? 'bg-[#8B5CF6]/10 text-[#8B5CF6]' :
-                      t.status === 'resolved' ? 'bg-[#10B981]/10 text-[#10B981]' :
-                      'bg-white/10 text-white/40'
-                    }`}>
-                      {t.status === 'open' ? 'Abierto' :
-                       t.status === 'in_progress' ? 'En Curso' :
-                       t.status === 'resolved' ? 'Resuelto' : 'Cerrado'}
-                    </span>
+              <div key={t.id} className="p-4 rounded-xl glass-card flex flex-col gap-2">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-white/80">{t.subject}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-[8px] font-semibold uppercase tracking-wider ${
+                        t.status === 'open' ? 'bg-[#FFD166]/10 text-[#FFD166]' :
+                        t.status === 'in_progress' ? 'bg-[#8B5CF6]/10 text-[#8B5CF6]' :
+                        t.status === 'resolved' ? 'bg-[#10B981]/10 text-[#10B981]' :
+                        'bg-white/10 text-white/40'
+                      }`}>
+                        {t.status === 'open' ? 'Abierto' :
+                         t.status === 'in_progress' ? 'En Curso' :
+                         t.status === 'resolved' ? 'Resuelto' : 'Cerrado'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-white/50">{t.message}</p>
+                    <p className="text-[10px] text-white/20">{new Date(t.createdAt).toLocaleDateString('es-ES')} · {new Date(t.createdAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</p>
                   </div>
-                  <p className="text-xs text-white/50">{t.message}</p>
-                  <p className="text-[10px] text-white/20">{new Date(t.createdAt).toLocaleDateString('es-ES')} · {new Date(t.createdAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</p>
+                  <div className="shrink-0 mt-1">
+                    {t.status === 'resolved' || t.status === 'closed' ? (
+                      <CheckCircle2 size={14} className="text-[#10B981]" />
+                    ) : (
+                      <Clock size={14} className="text-white/30" />
+                    )}
+                  </div>
                 </div>
-                <div className="shrink-0 mt-1">
-                  {t.status === 'resolved' || t.status === 'closed' ? (
-                    <CheckCircle2 size={14} className="text-[#10B981]" />
-                  ) : (
-                    <Clock size={14} className="text-white/30" />
-                  )}
-                </div>
+                {t.adminResponse && (
+                  <div className="mt-1 p-3 rounded-lg bg-white/[0.02] border border-white/[0.05] space-y-1">
+                    <p className="text-[9px] text-theme-accent font-bold uppercase tracking-wider">Respuesta del Soporte:</p>
+                    <p className="text-xs text-white/90 italic font-medium">&ldquo;{t.adminResponse}&rdquo;</p>
+                  </div>
+                )}
               </div>
             ))}
           </div>

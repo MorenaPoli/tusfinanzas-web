@@ -84,4 +84,19 @@ export const adminRouter = createRouter({
       await db.update(supportTickets).set({ status: input.status }).where(sql`${supportTickets.id} = ${input.id}`);
       return { success: true };
     }),
+
+  respondToTicket: adminQuery
+    .input(z.object({ id: z.number(), response: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      await db
+        .update(supportTickets)
+        .set({ 
+          adminResponse: input.response,
+          status: "resolved",
+          updatedAt: new Date()
+        })
+        .where(sql`${supportTickets.id} = ${input.id}`);
+      return { success: true };
+    }),
 });

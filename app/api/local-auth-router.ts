@@ -2,8 +2,8 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery, authedQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { users } from "@db/schema";
-import { eq } from "drizzle-orm";
+import { users, userSessions } from "@db/schema";
+import { eq, desc } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
@@ -35,7 +35,7 @@ export const localAuthRouter = createRouter({
         country: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const db = getDb();
 
       const existing = await db.select().from(users).where(eq(users.email, input.email));
@@ -55,6 +55,15 @@ export const localAuthRouter = createRouter({
       const userId = Number(result[0].insertId);
       const token = signToken(userId, input.email, "user");
 
+      // Log session creation
+      const ipAddress = ctx.req.headers.get("x-forwarded-for") || "127.0.0.1";
+      const userAgent = ctx.req.headers.get("user-agent") || "Desconocido";
+      await db.insert(userSessions).values({
+        userId,
+        ipAddress,
+        userAgent,
+      });
+
       return { token, user: { id: userId, email: input.email, name: input.name, role: "user" } };
     }),
 
@@ -65,7 +74,7 @@ export const localAuthRouter = createRouter({
         password: z.string(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const db = getDb();
 
       const userList = await db.select().from(users).where(eq(users.email, input.email));
@@ -82,6 +91,15 @@ export const localAuthRouter = createRouter({
       await db.update(users).set({ lastSignInAt: new Date() }).where(eq(users.id, user.id));
 
       const token = signToken(user.id, user.email, user.role);
+
+      // Log session creation
+      const ipAddress = ctx.req.headers.get("x-forwarded-for") || "127.0.0.1";
+      const userAgent = ctx.req.headers.get("user-agent") || "Desconocido";
+      await db.insert(userSessions).values({
+        userId: user.id,
+        ipAddress,
+        userAgent,
+      });
 
       return {
         token,
@@ -126,4 +144,16 @@ export const localAuthRouter = createRouter({
 
       return { success: true };
     }),
+
+  listSessions: authedQuery.query(async ({ ctx }) => {
+    const db = getDb();
+    const userId = ctx.user.id;
+
+    return db
+      .select()
+      .from(userSessions)
+      .where(eq(userSessions.userId, userId))
+      .orderBy(desc(userSessions.createdAt))
+      .limit(5);
+  }),
 });

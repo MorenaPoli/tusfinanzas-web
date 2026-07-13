@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
 import { motion, AnimatePresence } from 'framer-motion'
-import { LayoutDashboard, ListPlus, Receipt, BarChart3, Sparkles, LogOut, HelpCircle, Target, Shield, LineChart, Users, Menu, X } from 'lucide-react'
+import { LayoutDashboard, ListPlus, Receipt, BarChart3, Sparkles, LogOut, HelpCircle, Target, Shield, LineChart, Users, Menu, X, Calendar } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { useTheme } from '@/hooks/useTheme'
 import NotificationBell from '@/components/NotificationBell'
 
 const NAV = [
@@ -13,9 +14,11 @@ const NAV = [
   { path: '/chat', label: 'Experto', icon: Sparkles },
   { path: '/goals', label: 'Metas', icon: Target },
   { path: '/quotes', label: 'Inversiones', icon: LineChart },
+  { path: '/bills', label: 'Vencimientos', icon: Calendar },
 ];
 
 export default function Layout() {
+  useTheme();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -96,25 +99,25 @@ export default function Layout() {
         <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none" style={{ background: '#080810' }}>
         <div className="absolute top-[-15%] left-[-15%] w-[55%] h-[55%] rounded-full animate-float-slow transition-transform duration-1000 ease-out"
           style={{ 
-            background: 'radial-gradient(ellipse, rgba(255,45,146,0.28) 0%, transparent 70%)', 
+            background: 'radial-gradient(ellipse, rgba(var(--theme-glow), 0.28) 0%, transparent 70%)', 
             filter: 'blur(70px)',
             transform: `translate(${mousePos.x * 0.8}px, ${mousePos.y * 0.8}px)`
           }} />
         <div className="absolute bottom-[-15%] right-[-15%] w-[60%] h-[60%] rounded-full animate-float-slower transition-transform duration-1000 ease-out"
           style={{ 
-            background: 'radial-gradient(ellipse, rgba(139,92,246,0.25) 0%, transparent 70%)', 
+            background: 'radial-gradient(ellipse, rgba(var(--theme-glow), 0.2) 0%, transparent 70%)', 
             filter: 'blur(70px)',
             transform: `translate(${mousePos.x * -0.6}px, ${mousePos.y * -0.6}px)`
           }} />
         <div className="absolute top-[35%] right-[5%] w-[40%] h-[40%] rounded-full animate-float-medium transition-transform duration-1000 ease-out"
           style={{ 
-            background: 'radial-gradient(ellipse, rgba(0,229,255,0.18) 0%, transparent 70%)', 
+            background: 'radial-gradient(ellipse, rgba(var(--theme-glow), 0.15) 0%, transparent 70%)', 
             filter: 'blur(65px)',
             transform: `translate(${mousePos.x * 1.2}px, ${mousePos.y * -1.2}px)`
           }} />
         <div className="absolute top-[60%] left-[20%] w-[30%] h-[30%] rounded-full animate-float-slow transition-transform duration-1000 ease-out"
           style={{ 
-            background: 'radial-gradient(ellipse, rgba(99,102,241,0.16) 0%, transparent 70%)', 
+            background: 'radial-gradient(ellipse, rgba(var(--theme-glow), 0.12) 0%, transparent 70%)', 
             filter: 'blur(55px)',
             transform: `translate(${mousePos.x * -1}px, ${mousePos.y * 1}px)`
           }} />
@@ -303,6 +306,7 @@ export default function Layout() {
                   { path: '/summary', label: 'Resumen', icon: BarChart3, color: 'text-[#00E5FF]', bg: 'bg-[#00E5FF]/10' },
                   { path: '/goals', label: 'Metas', icon: Target, color: 'text-[#FFD166]', bg: 'bg-[#FFD166]/10' },
                   { path: '/quotes', label: 'Inversiones', icon: LineChart, color: 'text-[#8B5CF6]', bg: 'bg-[#8B5CF6]/10' },
+                  { path: '/bills', label: 'Vencimientos', icon: Calendar, color: 'text-[#FF4D6A]', bg: 'bg-[#FF4D6A]/10' },
                   { path: '/family', label: 'Mi Familia', icon: Users, color: 'text-[#10B981]', bg: 'bg-[#10B981]/10' },
                   { path: '/support', label: 'Soporte', icon: HelpCircle, color: 'text-[#FF2D92]', bg: 'bg-[#FF2D92]/10' },
                 ].map((item) => {

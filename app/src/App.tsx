@@ -20,6 +20,7 @@ const AdminPanel = lazy(() => import('@/sections/AdminPanel'))
 const Goals = lazy(() => import('@/sections/Goals'))
 const Family = lazy(() => import('@/sections/Family'))
 const Profile = lazy(() => import('@/sections/Profile'))
+const Bills = lazy(() => import('@/sections/Bills'))
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -59,6 +60,7 @@ export default function App() {
           <Route path="/goals" element={<ProtectedRoute><Goals /></ProtectedRoute>} />
           <Route path="/family" element={<ProtectedRoute><Family /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/bills" element={<ProtectedRoute><Bills /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
         </Route>
         <Route path="/payment/success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />

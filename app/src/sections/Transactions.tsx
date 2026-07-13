@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Trash2, Filter, X, Download, UploadCloud, Sparkles, Plus } from 'lucide-react'
@@ -14,6 +14,32 @@ export default function Transactions() {
   const { isFree } = useSubscription();
 
   const { data: transactions, isLoading } = trpc.finance.listTransactions.useQuery();
+
+  const [cachedTransactions, setCachedTransactions] = useState<any[]>(() => {
+    const cached = localStorage.getItem('tusfinanzas_cached_transactions');
+    return cached ? JSON.parse(cached) : [];
+  });
+
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (transactions) {
+      localStorage.setItem('tusfinanzas_cached_transactions', JSON.stringify(transactions));
+      setCachedTransactions(transactions);
+    }
+  }, [transactions]);
+
   const deleteTx = trpc.finance.deleteTransaction.useMutation({
     onSuccess: () => {
       utils.finance.listTransactions.invalidate();
@@ -31,6 +57,8 @@ export default function Transactions() {
   const [parsedRows, setParsedRows] = useState<{ date: string; description: string; amount: number; type: TransactionType; category: string }[]>([]);
   const [isClassifying, setIsClassifying] = useState(false);
   const [importCurrency, setImportCurrency] = useState('USD');
+  const [isDragging, setIsDragging] = useState(false);
+  const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'amount-desc' | 'amount-asc'>('date-desc');
 
   const classifyCsv = trpc.finance.classifyCsvRows.useMutation();
   const bulkInsert = trpc.finance.bulkInsertTransactions.useMutation({
@@ -190,23 +218,36 @@ export default function Transactions() {
     bulkInsert.mutate({ transactions: payload });
   };
 
-  const filtered = transactions?.filter(t => filter === 'all' || t.type === filter) || [];
+  const filtered = cachedTransactions?.filter(t => filter === 'all' || t.type === filter) || [];
 
-  // Group by month and sort chronologically (newest first)
-  const grouped: Record<string, typeof filtered> = {};
-  for (const t of filtered) {
+  // Sort flat list based on criteria
+  const sorted = [...filtered].sort((a, b) => {
+    const ad = a.date instanceof Date ? a.date.toISOString() : String(a.date);
+    const bd = b.date instanceof Date ? b.date.toISOString() : String(b.date);
+    const am = parseFloat(a.amount);
+    const bm = parseFloat(b.amount);
+
+    if (sortBy === 'date-desc') {
+      return bd.localeCompare(ad);
+    } else if (sortBy === 'date-asc') {
+      return ad.localeCompare(bd);
+    } else if (sortBy === 'amount-desc') {
+      return bm - am;
+    } else {
+      return am - bm;
+    }
+  });
+
+  // Group by month maintaining order
+  const grouped: Record<string, typeof sorted> = {};
+  for (const t of sorted) {
     const month = getDateStr(t.date).slice(0, 7);
     if (!grouped[month]) grouped[month] = [];
     grouped[month].push(t);
   }
-  for (const month of Object.keys(grouped)) {
-    grouped[month].sort((a, b) => {
-      const ad = a.date instanceof Date ? a.date.toISOString() : String(a.date);
-      const bd = b.date instanceof Date ? b.date.toISOString() : String(b.date);
-      return bd.localeCompare(ad);
-    });
-  }
-  const sortedMonths = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+  const sortedMonths = Object.keys(grouped).sort((a, b) => {
+    return sortBy === 'date-asc' ? a.localeCompare(b) : b.localeCompare(a);
+  });
 
   const filters: { key: TransactionType | 'all'; label: string }[] = [
     { key: 'all', label: 'Todos' },
@@ -223,13 +264,13 @@ export default function Transactions() {
       navigate('/checkout');
       return;
     }
-    if (!transactions || transactions.length === 0) {
+    if (!cachedTransactions || cachedTransactions.length === 0) {
       alert("No hay transacciones para exportar.");
       return;
     }
 
     const headers = ["ID", "Fecha", "Tipo", "Categoria", "Monto", "Descripcion"];
-    const rows = transactions.map(t => [
+    const rows = cachedTransactions.map(t => [
       t.id,
       getDateStr(t.date),
       t.type,
@@ -251,6 +292,13 @@ export default function Transactions() {
 
   return (
     <div className="max-w-lg mx-auto px-6 pt-6">
+      {/* Offline banner */}
+      {isOffline && (
+        <div className="mb-4 py-2.5 px-4 rounded-xl bg-[#FF4D6A]/10 border border-[#FF4D6A]/20 text-[#FF4D6A] text-xs font-bold tracking-wide flex items-center justify-center gap-1.5 animate-pulse">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#FF4D6A]" />
+          Modo sin conexión · Mostrando datos locales en caché
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -263,9 +311,24 @@ export default function Transactions() {
           <button onClick={exportToCSV} className="p-2 rounded-xl hover:bg-white/5" title="Exportar a CSV">
             <Download size={18} className="text-white/60" />
           </button>
-          <button onClick={() => setShowFilters(!showFilters)} className="p-2 rounded-xl hover:bg-white/5">
-            {showFilters ? <X size={18} className="text-white/60" /> : <Filter size={18} className="text-white/60" />}
+          <div className="flex items-center gap-2">
+          <select
+            value={sortBy}
+            onChange={(e: any) => setSortBy(e.target.value)}
+            className="px-2.5 py-1.5 rounded-xl glass border border-white/5 text-xs text-white/80 focus:outline-none focus:border-theme-accent cursor-pointer"
+          >
+            <option value="date-desc" className="bg-[#0A0A0A]">Más recientes</option>
+            <option value="date-asc" className="bg-[#0A0A0A]">Más antiguos</option>
+            <option value="amount-desc" className="bg-[#0A0A0A]">Monto mayor</option>
+            <option value="amount-asc" className="bg-[#0A0A0A]">Monto menor</option>
+          </select>
+          <button onClick={() => setShowFilters(!showFilters)}
+            className={`p-2 rounded-xl border transition-all ${
+              showFilters ? 'bg-white/10 border-white/20 text-white' : 'glass border-white/5 text-white/60 hover:text-white'
+            }`}>
+            <Filter size={18} />
           </button>
+        </div>
         </div>
       </div>
 
@@ -289,19 +352,36 @@ export default function Transactions() {
 
       {/* Drag & Drop Import Area */}
       <div
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={handleFileDrop}
-        className="relative group p-6 mb-6 rounded-2xl border border-dashed border-white/[0.1] hover:border-[#8B5CF6]/50 glass-card hover:bg-[#8B5CF6]/5 text-center cursor-pointer glow-purple"
+        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleFileDrop(e); }}
+        className={`relative group p-6 mb-6 rounded-2xl border border-dashed transition-all text-center cursor-pointer ${
+          isDragging 
+            ? 'bg-theme-accent-10 border-theme-accent scale-[1.01]' 
+            : 'border-white/[0.1] hover:border-theme-accent/50 glass-card hover:bg-white/[0.01]'
+        }`}
       >
-        <input
-          type="file"
-          accept=".csv"
-          onChange={handleFileSelect}
-          className="absolute inset-0 opacity-0 cursor-pointer"
-        />
-        <UploadCloud size={28} className="mx-auto mb-2 text-white/30 group-hover:text-[#8B5CF6] transition-colors" />
-        <p className="text-xs font-semibold text-white/80">Importar Extracto Bancario (CSV)</p>
-        <p className="text-[10px] text-white/40 mt-1">Arrastra tu archivo aquí o haz clic para subirlo. Clasificado por Gemini 1.5 Flash.</p>
+        {isClassifying ? (
+          <div className="py-2 space-y-2">
+            <div className="w-8 h-8 border-2 border-theme-accent border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-xs font-semibold text-white/80 animate-pulse">Clasificando movimientos con Gemini...</p>
+            <p className="text-[10px] text-white/40">Analizando conceptos, montos y categorías adecuadas...</p>
+          </div>
+        ) : (
+          <>
+            <input
+              type="file"
+              accept=".csv"
+              onChange={handleFileSelect}
+              className="absolute inset-0 opacity-0 cursor-pointer"
+            />
+            <UploadCloud size={28} className={`mx-auto mb-2 transition-all duration-300 ${
+              isDragging ? 'text-theme-accent scale-110' : 'text-white/30 group-hover:text-theme-accent'
+            }`} />
+            <p className="text-xs font-semibold text-white/80">Importar Extracto Bancario (CSV)</p>
+            <p className="text-[10px] text-white/40 mt-1">Arrastra tu archivo aquí o haz clic para subirlo. Clasificado por Gemini.</p>
+          </>
+        )}
       </div>
 
       {/* Transactions */}

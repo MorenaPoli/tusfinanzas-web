@@ -8,6 +8,7 @@ import { goalsRouter } from "./goals-router";
 import { familyRouter } from "./family-router";
 import { notificationRouter } from "./notification-router";
 import { budgetRouter } from "./budget-router";
+import { billsRouter } from "./bills-router";
 import { createRouter, publicQuery } from "./middleware";
 
 export const appRouter = createRouter({
@@ -22,6 +23,7 @@ export const appRouter = createRouter({
   family: familyRouter,
   notification: notificationRouter,
   budget: budgetRouter,
+  bills: billsRouter,
 });
 
 export type AppRouter = typeof appRouter;

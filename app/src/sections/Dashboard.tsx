@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router'
 import { motion, AnimatePresence } from 'framer-motion'
-import { LogOut, Wallet, TrendingUp, TrendingDown, PiggyBank, Gem, CreditCard, Sparkles, Plus, Crown, AlertTriangle, Trash2 } from 'lucide-react'
+import { LogOut, Wallet, TrendingUp, TrendingDown, PiggyBank, Gem, CreditCard, Sparkles, Plus, Crown, AlertTriangle, Trash2, RotateCcw } from 'lucide-react'
 import { trpc } from '@/providers/trpc'
 import { useAuth } from '@/hooks/useAuth'
 import { useSubscription } from '@/hooks/useSubscription'
@@ -24,6 +24,44 @@ export default function Dashboard() {
   const { data: transactions } = trpc.finance.listTransactions.useQuery();
   const { data: dailyQuote } = trpc.finance.getDailyQuote.useQuery();
 
+  // Local cache fallbacks
+  const [cachedTotals, setCachedTotals] = useState<any>(() => {
+    const cached = localStorage.getItem('tusfinanzas_cached_totals');
+    return cached ? JSON.parse(cached) : { income: 0, expense: 0, capital: 0, netWorth: 0, asset: 0, debt: 0, investment: 0 };
+  });
+
+  const [cachedTransactions, setCachedTransactions] = useState<any[]>(() => {
+    const cached = localStorage.getItem('tusfinanzas_cached_transactions');
+    return cached ? JSON.parse(cached) : [];
+  });
+
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (totals) {
+      localStorage.setItem('tusfinanzas_cached_totals', JSON.stringify(totals));
+      setCachedTotals(totals);
+    }
+  }, [totals]);
+
+  useEffect(() => {
+    if (transactions) {
+      localStorage.setItem('tusfinanzas_cached_transactions', JSON.stringify(transactions));
+      setCachedTransactions(transactions);
+    }
+  }, [transactions]);
+
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(['Comida']);
   const [budgetAmount, setBudgetAmount] = useState('50000');
@@ -32,10 +70,28 @@ export default function Dashboard() {
 
   const { data: budgetReport = [] } = trpc.budget.getBudgetReport.useQuery();
 
+  const refreshQuote = trpc.finance.refreshDailyQuote.useMutation({
+    onSuccess: () => utils.finance.getDailyQuote.invalidate(),
+  });
+
   const setBudget = trpc.budget.set.useMutation();
 
   const deleteBudget = trpc.budget.delete.useMutation({
     onSuccess: () => utils.budget.getBudgetReport.invalidate(),
+  });
+
+  const [recommendations, setRecommendations] = useState<{ category: string; amount: number; reason: string }[]>([]);
+  const [isGeneratingBudget, setIsGeneratingBudget] = useState(false);
+
+  const generateIA = trpc.budget.generateAutoBudget.useMutation({
+    onSuccess: (data) => {
+      setRecommendations(data.recommendations);
+      setIsGeneratingBudget(false);
+    },
+    onError: (err) => {
+      alert(err.message || 'Error al generar presupuestos.');
+      setIsGeneratingBudget(false);
+    }
   });
 
   const handleBudgetSubmit = async (e: React.FormEvent) => {
@@ -62,19 +118,26 @@ export default function Dashboard() {
 
 
   const recent = useMemo(() => {
-    if (!transactions) return [];
-    return [...transactions].sort((a, b) => {
+    if (!cachedTransactions) return [];
+    return [...cachedTransactions].sort((a, b) => {
       const ad = a.date instanceof Date ? a.date.toISOString() : String(a.date);
       const bd = b.date instanceof Date ? b.date.toISOString() : String(b.date);
       return bd.localeCompare(ad);
     }).slice(0, 5);
-  }, [transactions]);
+  }, [cachedTransactions]);
 
-  const netWorth = totals?.netWorth ?? 0;
+  const netWorth = cachedTotals?.netWorth ?? 0;
   const isPositive = netWorth >= 0;
 
   return (
     <div className="max-w-4xl mx-auto px-6 pt-6 pb-4">
+      {/* Offline banner */}
+      {isOffline && (
+        <div className="mb-4 py-2.5 px-4 rounded-xl bg-[#FF4D6A]/10 border border-[#FF4D6A]/20 text-[#FF4D6A] text-xs font-bold tracking-wide flex items-center justify-center gap-1.5 animate-pulse">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#FF4D6A]" />
+          Modo sin conexión · Mostrando datos locales en caché
+        </div>
+      )}
       {/* Header - mobile only */}
       <div className="lg:hidden flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -187,7 +250,7 @@ export default function Dashboard() {
       )}
 
       {/* Alert Card for Budget Overrun */}
-      {totals && totals.income > 0 && (totals.expense / totals.income) >= 0.8 && (
+      {cachedTotals && cachedTotals.income > 0 && (cachedTotals.expense / cachedTotals.income) >= 0.8 && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
           <div className="p-4 rounded-2xl glass-card border border-[#FF4D6A]/25 flex items-start gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#FF4D6A]/20 flex items-center justify-center shrink-0">
@@ -196,7 +259,7 @@ export default function Dashboard() {
             <div>
               <p className="text-sm font-bold text-[#FF4D6A]">¡Límite de presupuesto en riesgo!</p>
               <p className="text-xs text-white/60 mt-0.5">
-                Tus gastos de este mes (${totals.expense.toLocaleString()}) representan el {((totals.expense / totals.income) * 100).toFixed(0)}% de tus ingresos. Te sugerimos recortar gastos no esenciales.
+                Tus gastos de este mes (${cachedTotals.expense.toLocaleString()}) representan el {((cachedTotals.expense / cachedTotals.income) * 100).toFixed(0)}% de tus ingresos. Te sugerimos recortar gastos no esenciales.
               </p>
             </div>
           </div>
@@ -204,14 +267,23 @@ export default function Dashboard() {
       )}
 
       {/* Net Worth Hero Card */}
-      <motion.div id="summary-card" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-        className="relative overflow-hidden rounded-3xl p-7 mb-6 glass-strong glow-pink">
+      <motion.div 
+        id="summary-card" 
+        initial={{ opacity: 0, y: 10 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        transition={{ delay: 0.1 }}
+        onClick={() => navigate('/summary')}
+        className="relative overflow-hidden rounded-3xl p-7 mb-6 glass-strong glow-pink cursor-pointer hover:bg-white/[0.02] hover:scale-[1.01] active:scale-[0.99] transition-all group"
+      >
         {/* Inner glow ring */}
         <div className="absolute inset-0 rounded-3xl" style={{ background: 'radial-gradient(ellipse at top right, rgba(255,45,146,0.12) 0%, transparent 60%), radial-gradient(ellipse at bottom left, rgba(139,92,246,0.10) 0%, transparent 60%)' }} />
         {/* Shimmer line */}
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
         <div className="relative">
-          <p className="text-[11px] text-white/30 uppercase tracking-[0.25em] font-semibold mb-3">Patrimonio Neto</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[11px] text-white/30 uppercase tracking-[0.25em] font-semibold">Patrimonio Neto</p>
+            <span className="text-[10px] text-white/20 group-hover:text-white/40 transition-colors flex items-center gap-1">Ver Resumen →</span>
+          </div>
           <h2 className={`text-5xl sm:text-6xl font-black tracking-tight ${isPositive ? 'text-white' : 'text-[#FF4D6A]'}`}
             style={isPositive ? { textShadow: '0 0 40px rgba(255,255,255,0.12)' } : {}}>
             ${Math.abs(netWorth).toLocaleString('en-US', { minimumFractionDigits: 2 })}
@@ -226,10 +298,10 @@ export default function Dashboard() {
       {/* Quick Stats Grid */}
       <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         {[
-          { icon: TrendingUp, label: 'Ingresos', value: totals?.income ?? 0, color: '#00E5FF', glow: 'rgba(0,229,255,0.15)' },
-          { icon: TrendingDown, label: 'Gastos', value: totals?.expense ?? 0, color: '#FF4D6A', glow: 'rgba(255,77,106,0.15)' },
-          { icon: Wallet, label: 'Capital', value: totals?.capital ?? 0, color: '#FFD166', glow: 'rgba(255,209,102,0.12)' },
-          { icon: PiggyBank, label: 'Patrimonio', value: totals?.netWorth ?? 0, color: '#10B981', glow: 'rgba(16,185,129,0.12)' },
+          { icon: TrendingUp, label: 'Ingresos', value: cachedTotals?.income ?? 0, color: '#00E5FF', glow: 'rgba(0,229,255,0.15)' },
+          { icon: TrendingDown, label: 'Gastos', value: cachedTotals?.expense ?? 0, color: '#FF4D6A', glow: 'rgba(255,77,106,0.15)' },
+          { icon: Wallet, label: 'Capital', value: cachedTotals?.capital ?? 0, color: '#FFD166', glow: 'rgba(255,209,102,0.12)' },
+          { icon: PiggyBank, label: 'Patrimonio', value: cachedTotals?.netWorth ?? 0, color: '#10B981', glow: 'rgba(16,185,129,0.12)' },
         ].map((s) => (
           <motion.div key={s.label} variants={item}
             className="p-4 rounded-2xl glass-card cursor-default"
@@ -247,9 +319,9 @@ export default function Dashboard() {
       {/* Secondary Stats */}
       <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-3 gap-3 mb-6">
         {[
-          { icon: Gem, label: 'Bienes', value: totals?.asset ?? 0, color: '#8B5CF6', glow: 'rgba(139,92,246,0.15)' },
-          { icon: CreditCard, label: 'Deudas', value: totals?.debt ?? 0, color: '#EF4444', glow: 'rgba(239,68,68,0.12)' },
-          { icon: TrendingUp, label: 'Inversiones', value: totals?.investment ?? 0, color: '#6366F1', glow: 'rgba(99,102,241,0.15)' },
+          { icon: Gem, label: 'Bienes', value: cachedTotals?.asset ?? 0, color: '#8B5CF6', glow: 'rgba(139,92,246,0.15)' },
+          { icon: CreditCard, label: 'Deudas', value: cachedTotals?.debt ?? 0, color: '#EF4444', glow: 'rgba(239,68,68,0.12)' },
+          { icon: TrendingUp, label: 'Inversiones', value: cachedTotals?.investment ?? 0, color: '#6366F1', glow: 'rgba(99,102,241,0.15)' },
         ].map((s) => (
           <motion.div key={s.label} variants={item}
             className="p-3 rounded-xl glass-card text-center"
@@ -267,11 +339,21 @@ export default function Dashboard() {
       {/* Daily Quote */}
       {dailyQuote && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-          className="p-5 rounded-2xl mb-6 glass-card border border-[#FF2D92]/12"
-          style={{ background: 'linear-gradient(135deg, rgba(255,45,146,0.06) 0%, rgba(139,92,246,0.06) 50%, rgba(99,102,241,0.04) 100%)' }}>
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles size={14} className="text-[#FF2D92]" />
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-[#FF2D92]">Consejo del día</span>
+          className="p-5 rounded-2xl mb-6 glass-card border border-white/[0.04]"
+          style={{ background: 'linear-gradient(135deg, rgba(var(--theme-glow), 0.08) 0%, rgba(var(--theme-glow), 0.03) 100%)' }}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Sparkles size={14} className="text-theme-accent animate-pulse" />
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-theme-accent">Consejo del día</span>
+            </div>
+            <button
+              onClick={() => refreshQuote.mutate()}
+              disabled={refreshQuote.isPending}
+              className={`p-1.5 rounded-lg text-white/40 hover:text-white/80 hover:bg-white/5 transition-all ${refreshQuote.isPending ? 'animate-spin' : ''}`}
+              title="Refrescar consejo con Gemini"
+            >
+              <RotateCcw size={12} />
+            </button>
           </div>
           <p className="text-sm text-white/70 italic">&ldquo;{dailyQuote.text}&rdquo;</p>
         </motion.div>
@@ -296,6 +378,8 @@ export default function Dashboard() {
               const color = b.percent >= 100 ? '#FF4D6A' : b.percent >= 80 ? '#FFD166' : '#10B981';
               const strokeDasharray = 2 * Math.PI * 20;
               const strokeDashoffset = strokeDasharray - (Math.min(100, b.percent) / 100) * strokeDasharray;
+              const remaining = b.limit - b.spent;
+              const isOver = remaining < 0;
 
               return (
                 <div key={b.id} className="p-4 rounded-2xl glass-card flex items-center justify-between relative overflow-hidden">
@@ -315,6 +399,11 @@ export default function Dashboard() {
                     <div>
                       <h3 className="text-sm font-semibold capitalize text-white">{b.category}</h3>
                       <p className="text-[10px] text-white/40 font-medium">Gastado: ${b.spent.toLocaleString()} / ${b.limit.toLocaleString()}</p>
+                      <p className={`text-[10px] font-bold mt-0.5 ${isOver ? 'text-[#FF4D6A]' : 'text-[#10B981]'}`}>
+                        {isOver 
+                          ? `Excedido por $${Math.abs(remaining).toLocaleString()}` 
+                          : `Quedan $${remaining.toLocaleString()}`}
+                      </p>
                     </div>
                   </div>
                   
@@ -387,6 +476,64 @@ export default function Dashboard() {
             >
               <h3 className="text-lg font-bold mb-1">Definir Presupuestos</h3>
               <p className="text-xs text-white/40 mb-4">Ajustá tus límites mensuales por categoría</p>
+
+              {/* Gemini Suggest budgets button */}
+              <div className="mb-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsGeneratingBudget(true);
+                    generateIA.mutate();
+                  }}
+                  disabled={isGeneratingBudget}
+                  className="w-full py-2.5 rounded-xl bg-[#8B5CF6]/15 hover:bg-[#8B5CF6]/25 border border-[#8B5CF6]/30 text-[#8B5CF6] text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                >
+                  <Sparkles size={13} className="animate-pulse" />
+                  {isGeneratingBudget ? 'Analizando con Gemini...' : 'Sugerir Presupuestos con IA'}
+                </button>
+
+                {recommendations.length > 0 && (
+                  <div className="mt-3 p-4 rounded-xl glass bg-white/[0.01] border border-white/[0.04] space-y-3">
+                    <div className="flex justify-between items-center">
+                      <h4 className="text-xs font-bold text-white flex items-center gap-1">
+                        <Sparkles size={12} className="text-theme-accent" /> Sugerido por Gemini
+                      </h4>
+                      <button
+                        onClick={() => setRecommendations([])}
+                        className="text-[10px] text-white/30 hover:text-white"
+                      >
+                        Cerrar
+                      </button>
+                    </div>
+                    <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
+                      {recommendations.map((rec) => (
+                        <div key={rec.category} className="flex justify-between items-start text-[11px] p-2 glass rounded-lg">
+                          <div>
+                            <p className="font-bold text-white capitalize">{rec.category}</p>
+                            <p className="text-white/40 text-[9px] mt-0.5 leading-tight">{rec.reason}</p>
+                          </div>
+                          <p className="font-extrabold text-[#00E5FF]">${rec.amount.toLocaleString()}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        for (const rec of recommendations) {
+                          await setBudget.mutateAsync({ category: rec.category, amount: String(rec.amount) });
+                        }
+                        utils.budget.getBudgetReport.invalidate();
+                        setRecommendations([]);
+                        setIsBudgetModalOpen(false);
+                        alert("Presupuestos sugeridos aplicados con éxito.");
+                      }}
+                      className="w-full py-2 rounded-lg bg-theme-accent text-white text-xs font-bold transition-all hover:opacity-95"
+                    >
+                      Aplicar Todos
+                    </button>
+                  </div>
+                )}
+              </div>
 
               <form onSubmit={handleBudgetSubmit} className="space-y-4">
                 {/* Multi-category select grid */}

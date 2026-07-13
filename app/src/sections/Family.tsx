@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Users, Shield, LogOut, Copy, Check, Trash2, Plus, Sparkles } from 'lucide-react'
+import { ArrowLeft, Users, Shield, LogOut, Copy, Check, Trash2, Plus, Sparkles, MessageCircle } from 'lucide-react'
 import { trpc } from '@/providers/trpc'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -9,6 +9,7 @@ export default function Family() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const utils = trpc.useUtils();
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   const { data: family, isLoading } = trpc.family.getMyFamily.useQuery();
 
@@ -16,6 +17,18 @@ export default function Family() {
   const [familyCode, setFamilyCode] = useState('');
   const [copied, setCopied] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [chatInput, setChatInput] = useState('');
+
+  // Fetch family chat messages with automatic updates (long poll style)
+  const { data: messages = [], refetch: refetchMessages } = trpc.family.listMessages.useQuery(undefined, {
+    enabled: !!family,
+    refetchInterval: 3500 // refresh chat every 3.5 seconds
+  });
+
+  // Scroll chat to bottom on new messages
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   // Mutations
   const createFamily = trpc.family.createFamily.useMutation({
@@ -66,6 +79,25 @@ export default function Family() {
     },
   });
 
+  const updateLimit = trpc.family.updateMemberLimit.useMutation({
+    onSuccess: () => {
+      utils.family.getMyFamily.invalidate();
+    },
+    onError: (err) => {
+      alert(err.message || 'Error al actualizar el límite.');
+    },
+  });
+
+  const sendMessage = trpc.family.sendMessage.useMutation({
+    onSuccess: () => {
+      setChatInput('');
+      refetchMessages();
+    },
+    onError: (err) => {
+      alert(err.message || 'Error al enviar el mensaje.');
+    }
+  });
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!familyName.trim()) return;
@@ -89,8 +121,14 @@ export default function Family() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleSendChat = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+    sendMessage.mutate({ message: chatInput });
+  };
+
   return (
-    <div id="family-panel" className="max-w-lg mx-auto px-6 pt-6 pb-20">
+    <div id="family-panel" className="max-w-lg mx-auto px-6 pt-6 pb-24">
       {/* Back Header */}
       <div className="flex items-center gap-3 mb-6">
         <button onClick={() => navigate('/dashboard')} className="p-2 -ml-2 rounded-xl hover:bg-white/5 transition-colors">
@@ -158,57 +196,183 @@ export default function Family() {
             </div>
           </div>
 
-          {/* Members List */}
+          {/* Members List with Spending Limits */}
           <div className="p-5 rounded-2xl glass-card space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-white/40 flex items-center gap-1.5">
               <Users size={12} className="text-white/30" /> Integrantes ({family.members.length}/6)
             </h3>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {family.members.map((mem, idx) => {
                 const isAdmin = mem.role === 'admin';
                 const isMe = mem.id === user?.id;
+                
                 return (
-                  <div key={mem.id} className="flex items-center justify-between p-3.5 rounded-xl glass">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-black shrink-0"
-                        style={{ background: isAdmin ? 'rgba(139,92,246,0.25)' : 'rgba(255,255,255,0.06)', color: isAdmin ? '#8B5CF6' : `hsl(${(idx * 60) % 360}, 70%, 70%)`, boxShadow: isAdmin ? '0 0 12px rgba(139,92,246,0.3)' : 'none' }}>
-                        {mem.name.slice(0, 2).toUpperCase()}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <p className="text-sm font-semibold truncate text-white">{mem.name}</p>
-                          {isMe && (
-                            <span className="text-[9px] glass border border-white/10 px-1.5 py-0.5 rounded-full text-white/40">Tú</span>
-                          )}
+                  <div key={mem.id} className="p-3.5 rounded-xl glass space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 min-w-0">
+                        {mem.avatar && !mem.avatar.startsWith('http') && !mem.avatar.startsWith('/') ? (
+                          <div className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-lg select-none shrink-0 shadow-sm">
+                            {mem.avatar}
+                          </div>
+                        ) : (
+                          <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-black shrink-0"
+                            style={{ background: isAdmin ? 'rgba(139,92,246,0.25)' : 'rgba(255,255,255,0.06)', color: isAdmin ? '#8B5CF6' : `hsl(${(idx * 60) % 360}, 70%, 70%)`, boxShadow: isAdmin ? '0 0 12px rgba(139,92,246,0.3)' : 'none' }}>
+                            {mem.name.slice(0, 2).toUpperCase()}
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-sm font-semibold truncate text-white">{mem.name}</p>
+                            {isMe && (
+                              <span className="text-[9px] glass border border-white/10 px-1.5 py-0.5 rounded-full text-white/40">Tú</span>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-white/30 truncate">{mem.email}</p>
                         </div>
-                        <p className="text-[10px] text-white/30 truncate">{mem.email}</p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md ${
+                          isAdmin ? 'bg-[#8B5CF6]/15 text-[#8B5CF6] border border-[#8B5CF6]/20' : 'glass text-white/40'
+                        }`}>
+                          {isAdmin ? 'Admin' : 'Miembro'}
+                        </span>
+
+                        {family.myRole === 'admin' && !isMe && (
+                          <button
+                            onClick={() => {
+                              if (confirm(`¿Estás seguro de que quieres remover a ${mem.name}?`)) {
+                                removeMember.mutate({ memberId: mem.id });
+                              }
+                            }}
+                            className="p-1.5 rounded-lg hover:bg-[#FF4D6A]/10 text-white/20 hover:text-[#FF4D6A] transition-colors"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md ${
-                        isAdmin ? 'bg-[#8B5CF6]/15 text-[#8B5CF6] border border-[#8B5CF6]/20' : 'glass text-white/40'
-                      }`}>
-                        {isAdmin ? 'Admin' : 'Miembro'}
-                      </span>
+                    {/* Member Spending Limit Bar */}
+                    {!isAdmin && (
+                      <div className="pt-2 border-t border-white/[0.04] space-y-2">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="text-white/40">Gasto mensual este mes:</span>
+                          <span className="font-semibold text-white/80">
+                            ${mem.spentThisMonth.toLocaleString()} / {mem.spendingLimit ? `$${mem.spendingLimit.toLocaleString()}` : 'Sin Límite'}
+                          </span>
+                        </div>
+                        
+                        {mem.spendingLimit && (
+                          <div className="h-1.5 rounded-full bg-white/[0.04] overflow-hidden">
+                            <div 
+                              className={`h-full rounded-full transition-all ${
+                                mem.spentThisMonth >= mem.spendingLimit ? 'bg-[#FF4D6A]' : 'bg-theme-accent'
+                              }`}
+                              style={{ width: `${Math.min(100, (mem.spentThisMonth / mem.spendingLimit) * 100)}%` }}
+                            />
+                          </div>
+                        )}
 
-                      {family.myRole === 'admin' && !isMe && (
-                        <button
-                          onClick={() => {
-                            if (confirm(`¿Estás seguro de que quieres remover a ${mem.name}?`)) {
-                              removeMember.mutate({ memberId: mem.id });
-                            }
-                          }}
-                          className="p-1.5 rounded-lg hover:bg-[#FF4D6A]/10 text-white/20 hover:text-[#FF4D6A] transition-colors"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      )}
-                    </div>
+                        {/* Admin Limit Editor */}
+                        {family.myRole === 'admin' && (
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <input
+                              id={`limit-input-${mem.id}`}
+                              type="number"
+                              placeholder={mem.spendingLimit ? `Límite: $${mem.spendingLimit}` : "Asignar tope $"}
+                              className="w-full px-2.5 py-1.5 glass rounded-lg text-[10px] text-white focus:outline-none focus:border-theme-accent font-semibold"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  const target = e.currentTarget;
+                                  const val = target.value.trim() === '' ? null : parseFloat(target.value);
+                                  if (val !== null && (isNaN(val) || val < 0)) {
+                                    alert("Por favor, ingresa un monto válido mayor o igual a 0.");
+                                    return;
+                                  }
+                                  updateLimit.mutate({ targetUserId: mem.id, limit: val });
+                                  target.value = '';
+                                }
+                              }}
+                            />
+                            <button
+                              onClick={() => {
+                                const el = document.getElementById(`limit-input-${mem.id}`) as HTMLInputElement;
+                                if (el) {
+                                  const val = el.value.trim() === '' ? null : parseFloat(el.value);
+                                  if (val !== null && (isNaN(val) || val < 0)) {
+                                    alert("Por favor, ingresa un monto válido.");
+                                    return;
+                                  }
+                                  updateLimit.mutate({ targetUserId: mem.id, limit: val });
+                                  el.value = '';
+                                }
+                              }}
+                              className="px-2 py-1.5 rounded-lg bg-theme-accent text-white text-[10px] font-bold hover:opacity-95 active:scale-95 transition-all shrink-0"
+                            >
+                              Aplicar
+                            </button>
+                            {mem.spendingLimit && (
+                              <button
+                                onClick={() => updateLimit.mutate({ targetUserId: mem.id, limit: null })}
+                                className="px-2 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] text-white/50 hover:text-white transition-all shrink-0 border border-white/5"
+                              >
+                                Quitar
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
             </div>
+          </div>
+
+          {/* Family Chat Container */}
+          <div className="p-5 rounded-2xl glass-card space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-white/40 flex items-center gap-1.5">
+              <MessageCircle size={14} className="text-theme-accent" /> Chat Grupal Familiar
+            </h3>
+
+            <div className="h-44 overflow-y-auto space-y-2.5 p-3 glass rounded-xl custom-scrollbar flex flex-col">
+              {messages.length === 0 ? (
+                <p className="text-[10px] text-white/20 text-center py-12 my-auto">El chat está vacío. ¡Envía un mensaje familiar!</p>
+              ) : (
+                messages.map((msg: any) => {
+                  const isMe = msg.userId === user?.id;
+                  return (
+                    <div key={msg.id} className={`flex flex-col max-w-[85%] ${isMe ? 'self-end items-end' : 'self-start items-start'}`}>
+                      <span className="text-[9px] text-white/30 mb-0.5">{msg.userName}</span>
+                      <div className={`px-3 py-1.5 rounded-xl text-xs ${
+                        isMe ? 'bg-theme-accent text-white rounded-tr-none shadow-md shadow-theme-glow/10' : 'bg-white/5 text-white/80 rounded-tl-none border border-white/5'
+                      }`} style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
+                        {msg.message}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            <form onSubmit={handleSendChat} className="flex gap-2">
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Escribe un mensaje familiar..."
+                className="flex-1 px-3 py-2.5 glass border border-white/[0.08] rounded-xl text-xs text-white focus:outline-none focus:border-theme-accent"
+              />
+              <button
+                type="submit"
+                disabled={sendMessage.isPending}
+                className="px-4 py-2.5 rounded-xl bg-theme-accent text-white text-xs font-bold hover:opacity-90 active:scale-95 transition-all shadow-md"
+              >
+                Enviar
+              </button>
+            </form>
           </div>
 
           {/* Action Buttons */}
@@ -238,85 +402,65 @@ export default function Family() {
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#8B5CF6]/25 to-transparent" />
             <div className="relative">
               <h2 className="text-base font-bold text-white mb-2 flex items-center gap-2">
-                <Sparkles size={16} className="text-[#8B5CF6]" /> Finanzas en Equipo
+                <Users size={18} className="text-theme-accent" /> Control Multifamiliar
               </h2>
-              <p className="text-xs text-white/50 leading-relaxed">
-                El Plan Familiar te permite vincular hasta <strong className="text-white/70">5 familiares</strong> (6 integrantes en total). Compartirán presupuestos, patrimonio neto consolidado, transacciones e ingresos, y metas de ahorro comunes en tiempo real.
+              <p className="text-xs text-white/50 leading-relaxed mb-4">
+                El Plan Familiar te permite vincular cuentas de hasta 6 integrantes. Compartan presupuestos, saldos de capital, metas de ahorro y chateen de forma coordinada.
               </p>
-              <div className="flex items-center gap-4 mt-4 pt-3 border-t border-white/[0.06]">
-                {['Transacciones compartidas', 'Metas en común', 'Patrimonio consolidado'].map(f => (
-                  <span key={f} className="text-[9px] text-[#8B5CF6] bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 px-2 py-1 rounded-full whitespace-nowrap">{f}</span>
-                ))}
-              </div>
             </div>
           </div>
 
-          {/* Form 1: Join Family Group */}
-          <div className="p-5 rounded-2xl glass-card space-y-4">
+          {/* Join Group */}
+          <div className="p-6 rounded-2xl glass-card space-y-4">
             <div>
-              <h3 className="text-sm font-bold text-white">Unirse a un Grupo Familiar</h3>
-              <p className="text-[10px] text-white/30 mt-0.5">Ingresa el código que te envió el creador del grupo.</p>
+              <h3 className="font-bold text-sm text-white">Unirse a un Grupo Familiar</h3>
+              <p className="text-[10px] text-white/30 mt-0.5">Ingresa el código que te envió el administrador</p>
             </div>
             <form onSubmit={handleJoin} className="space-y-3">
               <input
                 type="text"
                 value={familyCode}
                 onChange={e => setFamilyCode(e.target.value)}
-                placeholder="Ej: FAM-XXXXXX"
-                className="w-full px-4 py-3 glass border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:border-[#8B5CF6] placeholder:text-white/20 transition-colors"
+                placeholder="Código de Invitación (ej: FAM-12345)"
+                required
+                className="w-full px-4 py-3 glass border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:border-theme-accent font-semibold tracking-wider text-center"
               />
               <button
                 type="submit"
-                disabled={!familyCode.trim() || actionLoading}
-                className="w-full py-3 rounded-xl glass border border-white/[0.10] hover:border-white/25 text-white text-xs font-bold transition-all"
+                disabled={actionLoading}
+                className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold text-xs tracking-wide transition-all"
               >
-                Unirse al Grupo
+                {actionLoading ? 'Uniéndose...' : 'Unirse al Grupo'}
               </button>
             </form>
           </div>
 
-          {/* Form 2: Create Family Group */}
-          <div className="p-5 rounded-2xl glass-card space-y-4">
+          {/* Create Group */}
+          <div className="p-6 rounded-2xl glass-card space-y-4">
             <div>
-              <h3 className="text-sm font-bold text-white">Crear un Nuevo Grupo Familiar</h3>
-              <p className="text-[10px] text-white/30 mt-0.5">Solo disponible para usuarios suscriptos al Plan Familiar.</p>
+              <h3 className="font-bold text-sm text-white">Crear Nuevo Grupo</h3>
+              <p className="text-[10px] text-white/30 mt-0.5">Define un nombre para tu núcleo familiar (ej: Familia Poli)</p>
             </div>
             <form onSubmit={handleCreate} className="space-y-3">
               <input
                 type="text"
                 value={familyName}
                 onChange={e => setFamilyName(e.target.value)}
-                placeholder="Nombre del Grupo (ej: Familia García)"
-                className="w-full px-4 py-3 glass border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:border-[#8B5CF6] placeholder:text-white/20 transition-colors"
+                placeholder="Nombre del grupo (ej: Familia Poli)"
+                required
+                className="w-full px-4 py-3 glass border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:border-theme-accent"
               />
               <button
                 type="submit"
-                disabled={!familyName.trim() || actionLoading}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-[#FF2D92] via-[#8B5CF6] to-[#6366F1] text-white text-xs font-bold transition-all shadow-lg shadow-[#FF2D92]/20 hover:shadow-[#FF2D92]/30"
+                disabled={actionLoading}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-[#FF2D92] via-[#8B5CF6] to-[#6366F1] text-white font-bold text-xs tracking-wide shadow-lg hover:opacity-90 active:scale-[0.98] transition-all"
               >
-                Crear Grupo Familiar
+                {actionLoading ? 'Creando...' : 'Crear mi Grupo Familiar'}
               </button>
             </form>
-          </div>
-
-          {/* Upgrade Banner */}
-          <div className="relative overflow-hidden p-5 rounded-2xl glass-card border border-[#FF2D92]/15 flex items-center justify-between gap-4">
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(255,45,146,0.06) 0%, rgba(139,92,246,0.04) 100%)' }} />
-            <div className="relative min-w-0">
-              <p className="text-xs font-bold text-white">¿Aún no tienes el Plan Familiar?</p>
-              <p className="text-[10px] text-white/40 mt-0.5 leading-normal">
-                Suscripción familiar por $8.99/mes. Agrega hasta 5 familiares.
-              </p>
-            </div>
-            <button
-              onClick={() => navigate('/checkout')}
-              className="relative px-4 py-2 rounded-xl bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] text-white text-[11px] font-bold shrink-0 shadow-md shadow-[#FF2D92]/20"
-            >
-              Cambiar Plan
-            </button>
           </div>
         </motion.div>
       )}
     </div>
-  );
+  )
 }

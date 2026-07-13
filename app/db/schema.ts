@@ -91,6 +91,7 @@ export const supportTickets = mysqlTable("support_tickets", {
   subject: varchar("subject", { length: 200 }).notNull(),
   message: text("message").notNull(),
   status: mysqlEnum("status", ["open", "in_progress", "resolved", "closed"]).default("open").notNull(),
+  adminResponse: text("adminResponse"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull().$onUpdate(() => new Date()),
 });
@@ -130,6 +131,7 @@ export const familyMemberships = mysqlTable("family_memberships", {
   familyGroupId: bigint("familyGroupId", { mode: "number", unsigned: true }).notNull(),
   userId: bigint("userId", { mode: "number", unsigned: true }).notNull().unique(),
   role: mysqlEnum("role", ["admin", "member"]).default("member").notNull(),
+  spendingLimit: decimal("spendingLimit", { precision: 15, scale: 2 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
@@ -162,3 +164,56 @@ export const budgets = mysqlTable("budgets", {
 
 export type Budget = typeof budgets.$inferSelect;
 export type InsertBudget = typeof budgets.$inferInsert;
+
+// ─── Family Chat Messages ───
+export const familyChatMessages = mysqlTable("family_chat_messages", {
+  id: serial("id").primaryKey(),
+  familyGroupId: bigint("familyGroupId", { mode: "number", unsigned: true }).notNull(),
+  userId: bigint("userId", { mode: "number", unsigned: true }).notNull(),
+  userName: varchar("userName", { length: 255 }).notNull(),
+  message: text("message").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type FamilyChatMessage = typeof familyChatMessages.$inferSelect;
+export type InsertFamilyChatMessage = typeof familyChatMessages.$inferInsert;
+
+// ─── User Investments (Simulated Portfolio) ───
+export const userInvestments = mysqlTable("user_investments", {
+  id: serial("id").primaryKey(),
+  userId: bigint("userId", { mode: "number", unsigned: true }).notNull(),
+  symbol: varchar("symbol", { length: 50 }).notNull(),
+  shares: decimal("shares", { precision: 15, scale: 4 }).notNull(),
+  avgPrice: decimal("avgPrice", { precision: 15, scale: 2 }).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull().$onUpdate(() => new Date()),
+});
+
+export type UserInvestment = typeof userInvestments.$inferSelect;
+export type InsertUserInvestment = typeof userInvestments.$inferInsert;
+
+// ─── Bills & Scheduled Services ───
+export const bills = mysqlTable("bills", {
+  id: serial("id").primaryKey(),
+  userId: bigint("userId", { mode: "number", unsigned: true }).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+  dueDate: timestamp("dueDate").notNull(),
+  isPaid: bigint("isPaid", { mode: "number" }).default(0).notNull(), // 0 for unpaid, 1 for paid
+  category: varchar("category", { length: 100 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Bill = typeof bills.$inferSelect;
+export type InsertBill = typeof bills.$inferInsert;
+
+// ─── User Sessions Audit Log ───
+export const userSessions = mysqlTable("user_sessions", {
+  id: serial("id").primaryKey(),
+  userId: bigint("userId", { mode: "number", unsigned: true }).notNull(),
+  ipAddress: varchar("ipAddress", { length: 45 }).notNull(),
+  userAgent: varchar("userAgent", { length: 255 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type UserSession = typeof userSessions.$inferSelect;
+export type InsertUserSession = typeof userSessions.$inferInsert;

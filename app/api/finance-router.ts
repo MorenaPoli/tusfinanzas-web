@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createRouter, authedQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { transactions, dailyQuotes, chatMessages, subscriptions, savingsGoals, familyMemberships } from "@db/schema";
+import { transactions, dailyQuotes, chatMessages, subscriptions, savingsGoals, familyMemberships, notifications, userInvestments } from "@db/schema";
 import { eq, and, desc, sql, inArray } from "drizzle-orm";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { checkBudgetThresholds } from "./budget-router";
@@ -154,6 +154,49 @@ export const financeRouter = createRouter({
 
       if (input.type === "expense") {
         await checkBudgetThresholds(db, userId, input.category);
+
+        // --- Check Family Member spending limits ---
+        try {
+          const [membership] = await db
+            .select()
+            .from(familyMemberships)
+            .where(eq(familyMemberships.userId, userId));
+            
+          if (membership && membership.spendingLimit) {
+            const limitVal = parseFloat(membership.spendingLimit);
+            
+            const startOfMonth = new Date();
+            startOfMonth.setDate(1);
+            startOfMonth.setHours(0, 0, 0, 0);
+            const startOfMonthStr = startOfMonth.toISOString().slice(0, 10);
+            
+            const [spentSum] = await db
+              .select({
+                total: sql<string>`SUM(amount)`
+              })
+              .from(transactions)
+              .where(
+                and(
+                  eq(transactions.userId, userId),
+                  eq(transactions.type, 'expense'),
+                  sql`date >= ${startOfMonthStr}`
+                )
+              );
+              
+            const currentSpent = parseFloat(spentSum?.total || '0');
+            if (currentSpent > limitVal) {
+              await db.insert(notifications).values({
+                userId,
+                type: "family_limit_exceeded",
+                title: "Límite de Gasto Familiar Excedido",
+                message: `Has gastado $${currentSpent.toLocaleString()} este mes, superando tu tope individual establecido de $${limitVal.toLocaleString()}.`,
+                isRead: 0,
+              });
+            }
+          }
+        } catch (err) {
+          console.error("Failed to verify family spending limit:", err);
+        }
       }
 
       return { id: Number(result[0].insertId) };
@@ -436,6 +479,24 @@ El consejo debe ser muy específico e inteligente, adaptado a su país y sus nú
       });
 
       return { id: Number(result[0].insertId) };
+    }),
+
+  refreshDailyQuote: authedQuery
+    .mutation(async ({ ctx }) => {
+      const db = getDb();
+      const userId = ctx.user.id;
+      const todayStr = new Date().toISOString().slice(0, 10);
+
+      await db
+        .delete(dailyQuotes)
+        .where(
+          and(
+            eq(dailyQuotes.userId, userId),
+            eq(dailyQuotes.date, new Date(todayStr))
+          )
+        );
+
+      return { success: true };
     }),
 
   // ─── Chat Messages ───
@@ -854,5 +915,157 @@ ${input.rows.map((r, i) => `Índice ${i}: "${r.description}" (monto: ${r.amount}
       }
 
       return { success: true, count: valuesToInsert.length };
+    }),
+
+  getPortfolio: authedQuery.query(async ({ ctx }) => {
+    const db = getDb();
+    const userId = ctx.user.id;
+
+    let holdings = await db
+      .select()
+      .from(userInvestments)
+      .where(eq(userInvestments.userId, userId));
+
+    let cashRow = holdings.find((h) => h.symbol === "CASH");
+    if (!cashRow) {
+      await db.insert(userInvestments).values({
+        userId,
+        symbol: "CASH",
+        shares: "100000.0000",
+        avgPrice: "1.00",
+      });
+
+      holdings = await db
+        .select()
+        .from(userInvestments)
+        .where(eq(userInvestments.userId, userId));
+      cashRow = holdings.find((h) => h.symbol === "CASH");
+    }
+
+    const cash = parseFloat(cashRow ? cashRow.shares : "100000");
+    const activeHoldings = holdings
+      .filter((h) => h.symbol !== "CASH")
+      .map((h) => ({
+        id: h.id,
+        symbol: h.symbol,
+        shares: parseFloat(h.shares),
+        avgPrice: parseFloat(h.avgPrice),
+      }));
+
+    return { cash, holdings: activeHoldings };
+  }),
+
+  buyAsset: authedQuery
+    .input(z.object({ symbol: z.string(), shares: z.number(), price: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = getDb();
+      const userId = ctx.user.id;
+      const totalCost = input.shares * input.price;
+
+      const [cashRow] = await db
+        .select()
+        .from(userInvestments)
+        .where(and(eq(userInvestments.userId, userId), eq(userInvestments.symbol, "CASH")));
+
+      const currentCash = cashRow ? parseFloat(cashRow.shares) : 100000;
+      if (currentCash < totalCost) {
+        throw new Error("Saldo de efectivo virtual insuficiente.");
+      }
+
+      const newCashVal = (currentCash - totalCost).toFixed(4);
+      if (cashRow) {
+        await db
+          .update(userInvestments)
+          .set({ shares: newCashVal })
+          .where(eq(userInvestments.id, cashRow.id));
+      } else {
+        await db.insert(userInvestments).values({
+          userId,
+          symbol: "CASH",
+          shares: newCashVal,
+          avgPrice: "1.00",
+        });
+      }
+
+      const [existing] = await db
+        .select()
+        .from(userInvestments)
+        .where(and(eq(userInvestments.userId, userId), eq(userInvestments.symbol, input.symbol)));
+
+      if (existing) {
+        const existingShares = parseFloat(existing.shares);
+        const existingAvgPrice = parseFloat(existing.avgPrice);
+        const totalShares = existingShares + input.shares;
+        const newAvgPrice = ((existingShares * existingAvgPrice) + totalCost) / totalShares;
+
+        await db
+          .update(userInvestments)
+          .set({
+            shares: totalShares.toFixed(4),
+            avgPrice: newAvgPrice.toFixed(2),
+          })
+          .where(eq(userInvestments.id, existing.id));
+      } else {
+        await db.insert(userInvestments).values({
+          userId,
+          symbol: input.symbol,
+          shares: input.shares.toFixed(4),
+          avgPrice: input.price.toFixed(2),
+        });
+      }
+
+      return { success: true };
+    }),
+
+  sellAsset: authedQuery
+    .input(z.object({ symbol: z.string(), shares: z.number(), price: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = getDb();
+      const userId = ctx.user.id;
+      const totalCredit = input.shares * input.price;
+
+      const [existing] = await db
+        .select()
+        .from(userInvestments)
+        .where(and(eq(userInvestments.userId, userId), eq(userInvestments.symbol, input.symbol)));
+
+      if (!existing || parseFloat(existing.shares) < input.shares) {
+        throw new Error("No tienes suficientes acciones/unidades para vender.");
+      }
+
+      const existingShares = parseFloat(existing.shares);
+      const remainingShares = existingShares - input.shares;
+
+      if (remainingShares <= 0.0001) {
+        await db.delete(userInvestments).where(eq(userInvestments.id, existing.id));
+      } else {
+        await db
+          .update(userInvestments)
+          .set({ shares: remainingShares.toFixed(4) })
+          .where(eq(userInvestments.id, existing.id));
+      }
+
+      const [cashRow] = await db
+        .select()
+        .from(userInvestments)
+        .where(and(eq(userInvestments.userId, userId), eq(userInvestments.symbol, "CASH")));
+
+      if (cashRow) {
+        const newCashVal = (parseFloat(cashRow.shares) + totalCredit).toFixed(4);
+        await db
+          .update(userInvestments)
+          .set({ shares: newCashVal })
+          .where(eq(userInvestments.id, cashRow.id));
+      } else {
+        const newCashVal = (100000 + totalCredit).toFixed(4);
+        await db.insert(userInvestments).values({
+          userId,
+          symbol: "CASH",
+          shares: newCashVal,
+          avgPrice: "1.00",
+        });
+      }
+
+      return { success: true };
     }),
 });

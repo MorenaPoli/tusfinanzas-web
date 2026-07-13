@@ -2,8 +2,8 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createRouter, authedQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { familyGroups, familyMemberships, users, subscriptions } from "@db/schema";
-import { eq, and } from "drizzle-orm";
+import { familyGroups, familyMemberships, users, subscriptions, transactions, familyChatMessages } from "@db/schema";
+import { eq, and, sql } from "drizzle-orm";
 
 export const familyRouter = createRouter({
   getMyFamily: authedQuery.query(async ({ ctx }) => {
@@ -32,18 +32,41 @@ export const familyRouter = createRouter({
       .from(familyMemberships)
       .where(eq(familyMemberships.familyGroupId, group.id));
 
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    const startOfMonthStr = startOfMonth.toISOString().slice(0, 10);
+
     const memberDetails = [];
     for (const mem of allMemberships) {
       const [u] = await db
-        .select({ id: users.id, name: users.name, email: users.email })
+        .select({ id: users.id, name: users.name, email: users.email, avatar: users.avatar })
         .from(users)
         .where(eq(users.id, mem.userId));
       if (u) {
+        const [spentSum] = await db
+          .select({
+            total: sql<string>`SUM(amount)`
+          })
+          .from(transactions)
+          .where(
+            and(
+              eq(transactions.userId, mem.userId),
+              eq(transactions.type, 'expense'),
+              sql`date >= ${startOfMonthStr}`
+            )
+          );
+
+        const currentSpent = parseFloat(spentSum?.total || '0');
+
         memberDetails.push({
           id: u.id,
           name: u.name,
           email: u.email,
+          avatar: u.avatar,
           role: mem.role,
+          spendingLimit: mem.spendingLimit ? parseFloat(mem.spendingLimit) : null,
+          spentThisMonth: currentSpent,
         });
       }
     }
@@ -237,6 +260,89 @@ export const familyRouter = createRouter({
 
       // 3. Delete membership
       await db.delete(familyMemberships).where(eq(familyMemberships.userId, input.memberId));
+
+      return { success: true };
+    }),
+
+  updateMemberLimit: authedQuery
+    .input(z.object({
+      targetUserId: z.number(),
+      limit: z.number().nullable(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = getDb();
+      const userId = ctx.user.id;
+
+      const [membership] = await db
+        .select()
+        .from(familyMemberships)
+        .where(eq(familyMemberships.userId, userId));
+
+      if (!membership || membership.role !== "admin") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Solo los administradores del grupo familiar pueden modificar los límites de gasto.",
+        });
+      }
+
+      await db
+        .update(familyMemberships)
+        .set({
+          spendingLimit: input.limit !== null ? String(input.limit) : null,
+        })
+        .where(
+          and(
+            eq(familyMemberships.userId, input.targetUserId),
+            eq(familyMemberships.familyGroupId, membership.familyGroupId)
+          )
+        );
+
+      return { success: true };
+    }),
+
+  listMessages: authedQuery
+    .query(async ({ ctx }) => {
+      const db = getDb();
+      const userId = ctx.user.id;
+
+      const [membership] = await db
+        .select()
+        .from(familyMemberships)
+        .where(eq(familyMemberships.userId, userId));
+
+      if (!membership) return [];
+
+      return db
+        .select()
+        .from(familyChatMessages)
+        .where(eq(familyChatMessages.familyGroupId, membership.familyGroupId))
+        .orderBy(familyChatMessages.createdAt);
+    }),
+
+  sendMessage: authedQuery
+    .input(z.object({ message: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const db = getDb();
+      const userId = ctx.user.id;
+
+      const [membership] = await db
+        .select()
+        .from(familyMemberships)
+        .where(eq(familyMemberships.userId, userId));
+
+      if (!membership) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "No perteneces a ningún grupo familiar.",
+        });
+      }
+
+      await db.insert(familyChatMessages).values({
+        familyGroupId: membership.familyGroupId,
+        userId,
+        userName: ctx.user.name || "Familiar",
+        message: input.message,
+      });
 
       return { success: true };
     }),

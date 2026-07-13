@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { createRouter, authedQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { budgets, transactions } from "@db/schema";
+import { budgets, transactions, notifications } from "@db/schema";
 import { eq, and, sql } from "drizzle-orm";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export const budgetRouter = createRouter({
   list: authedQuery.query(async ({ ctx }) => {
@@ -105,6 +106,88 @@ export const budgetRouter = createRouter({
       };
     });
   }),
+
+  generateAutoBudget: authedQuery
+    .mutation(async ({ ctx }) => {
+      const db = getDb();
+      const userId = ctx.user.id;
+
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const startStr = thirtyDaysAgo.toISOString().slice(0, 10);
+
+      const expenses = await db
+        .select({
+          category: transactions.category,
+          amount: transactions.amount,
+          description: transactions.description,
+        })
+        .from(transactions)
+        .where(
+          and(
+            eq(transactions.userId, userId),
+            eq(transactions.type, "expense"),
+            sql`${transactions.date} >= ${startStr}`
+          )
+        );
+
+      const totals: Record<string, number> = {};
+      for (const ex of expenses) {
+        const val = parseFloat(ex.amount);
+        totals[ex.category] = (totals[ex.category] || 0) + val;
+      }
+
+      const totalSpent = Object.values(totals).reduce((a, b) => a + b, 0);
+
+      let recommendations: { category: string; amount: number; reason: string }[] = [];
+      const apiKey = process.env.GEMINI_API_KEY;
+
+      if (apiKey && apiKey !== "placeholder" && !apiKey.includes("TEST-12345")) {
+        try {
+          const genAI = new GoogleGenerativeAI(apiKey);
+          const model = genAI.getGenerativeModel({
+            model: "gemini-2.0-flash",
+            generationConfig: { responseMimeType: "application/json" }
+          });
+
+          const prompt = `Asesórame sobre presupuestos mensuales óptimos (en base a la regla 50/30/20).
+Mis egresos de los últimos 30 días sumaron un total de $${totalSpent} USD desglosados en:
+${Object.entries(totals).map(([cat, val]) => `- ${cat}: $${val}`).join("\n")}
+
+Retorna un objeto JSON con la estructura:
+{
+  "recommendations": [
+    { "category": "Categoría de presupuesto recomendada", "amount": 15000, "reason": "Motivación corta" }
+  ]
+}
+Mantén los nombres de categorías simples (ej: Comida, Transporte, Entretenimiento, Servicios).`;
+
+          const result = await model.generateContent(prompt);
+          const responseText = result.response.text();
+          const parsed = JSON.parse(responseText);
+          if (parsed && Array.isArray(parsed.recommendations)) {
+            recommendations = parsed.recommendations;
+          }
+        } catch (err) {
+          console.error("Gemini auto-budget failed, running fallback:", err);
+        }
+      }
+
+      if (recommendations.length === 0) {
+        const categories = Object.keys(totals).length > 0 ? Object.keys(totals) : ["Comida", "Transporte", "Servicios", "Entretenimiento"];
+        recommendations = categories.map(cat => {
+          const spent = totals[cat] || 15000;
+          const amount = Math.ceil((spent * 1.1) / 5000) * 5000;
+          return {
+            category: cat,
+            amount: Math.max(5000, amount),
+            reason: `Basado en tu consumo de $${spent.toLocaleString()} con un 10% de margen de seguridad.`
+          };
+        });
+      }
+
+      return { recommendations };
+    }),
 });
 
 export async function checkBudgetThresholds(db: any, userId: number, category: string) {
