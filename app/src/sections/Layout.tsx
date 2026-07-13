@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
 import { motion, AnimatePresence } from 'framer-motion'
 import { LayoutDashboard, ListPlus, Receipt, BarChart3, Sparkles, LogOut, HelpCircle, Target, Shield, LineChart, Users, Menu, X } from 'lucide-react'
@@ -19,6 +19,18 @@ export default function Layout() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const x = (e.clientX / window.innerWidth - 0.5) * 50; // Max 50px shift
+      const y = (e.clientY / window.innerHeight - 0.5) * 50;
+      setMousePos({ x, y });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -26,14 +38,30 @@ export default function Layout() {
     <div className="min-h-screen flex text-white overflow-x-hidden relative">
       {/* Ambient Aurora Background */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none" style={{ background: '#080810' }}>
-        <div className="absolute top-[-15%] left-[-15%] w-[55%] h-[55%] rounded-full animate-float-slow"
-          style={{ background: 'radial-gradient(ellipse, rgba(255,45,146,0.25) 0%, transparent 70%)', filter: 'blur(60px)' }} />
-        <div className="absolute bottom-[-15%] right-[-15%] w-[60%] h-[60%] rounded-full animate-float-slower"
-          style={{ background: 'radial-gradient(ellipse, rgba(139,92,246,0.22) 0%, transparent 70%)', filter: 'blur(60px)' }} />
-        <div className="absolute top-[35%] right-[5%] w-[40%] h-[40%] rounded-full animate-float-medium"
-          style={{ background: 'radial-gradient(ellipse, rgba(0,229,255,0.14) 0%, transparent 70%)', filter: 'blur(60px)' }} />
-        <div className="absolute top-[60%] left-[20%] w-[30%] h-[30%] rounded-full animate-float-slow"
-          style={{ background: 'radial-gradient(ellipse, rgba(99,102,241,0.12) 0%, transparent 70%)', filter: 'blur(50px)' }} />
+        <div className="absolute top-[-15%] left-[-15%] w-[55%] h-[55%] rounded-full animate-float-slow transition-transform duration-1000 ease-out"
+          style={{ 
+            background: 'radial-gradient(ellipse, rgba(255,45,146,0.28) 0%, transparent 70%)', 
+            filter: 'blur(70px)',
+            transform: `translate(${mousePos.x * 0.8}px, ${mousePos.y * 0.8}px)`
+          }} />
+        <div className="absolute bottom-[-15%] right-[-15%] w-[60%] h-[60%] rounded-full animate-float-slower transition-transform duration-1000 ease-out"
+          style={{ 
+            background: 'radial-gradient(ellipse, rgba(139,92,246,0.25) 0%, transparent 70%)', 
+            filter: 'blur(70px)',
+            transform: `translate(${mousePos.x * -0.6}px, ${mousePos.y * -0.6}px)`
+          }} />
+        <div className="absolute top-[35%] right-[5%] w-[40%] h-[40%] rounded-full animate-float-medium transition-transform duration-1000 ease-out"
+          style={{ 
+            background: 'radial-gradient(ellipse, rgba(0,229,255,0.18) 0%, transparent 70%)', 
+            filter: 'blur(65px)',
+            transform: `translate(${mousePos.x * 1.2}px, ${mousePos.y * -1.2}px)`
+          }} />
+        <div className="absolute top-[60%] left-[20%] w-[30%] h-[30%] rounded-full animate-float-slow transition-transform duration-1000 ease-out"
+          style={{ 
+            background: 'radial-gradient(ellipse, rgba(99,102,241,0.16) 0%, transparent 70%)', 
+            filter: 'blur(55px)',
+            transform: `translate(${mousePos.x * -1}px, ${mousePos.y * 1}px)`
+          }} />
       </div>
 
       {/* Desktop Sidebar */}
