@@ -540,8 +540,8 @@ El consejo debe ser muy específico e inteligente, adaptado a su país y sus nú
           const d = m.createdAt instanceof Date ? m.createdAt : new Date(m.createdAt);
           return d >= today;
         });
-        if (todayUserMsgs.length >= 100) {
-          throw new Error("FREE_CHAT_LIMIT: Alcanzaste el limite de 100 mensajes por dia. Suscribite a PRO para ilimitado.");
+        if (todayUserMsgs.length >= 5) {
+          throw new Error("FREE_CHAT_LIMIT: Alcanzaste el limite de 5 mensajes por dia. Suscribite a PRO para ilimitado.");
         }
       }
 
@@ -577,8 +577,8 @@ El consejo debe ser muy específico e inteligente, adaptado a su país y sus nú
           const d = m.createdAt instanceof Date ? m.createdAt : new Date(m.createdAt);
           return d >= today;
         });
-        if (todayUserMsgs.length >= 100) {
-          throw new Error("FREE_CHAT_LIMIT: Alcanzaste el limite de 100 mensajes por dia. Suscribite a PRO para ilimitado.");
+        if (todayUserMsgs.length >= 5) {
+          throw new Error("FREE_CHAT_LIMIT: Alcanzaste el limite de 5 mensajes por dia. Suscribite a PRO para ilimitado.");
         }
       }
 

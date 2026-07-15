@@ -10,6 +10,7 @@ interface Message {
   id: number;
   role: 'user' | 'assistant';
   content: string;
+  createdAt?: string | Date;
 }
 
 function useFinancialContext() {
@@ -132,13 +133,19 @@ export default function AIChat() {
   const [isLoading, setIsLoading] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
-  const todayUserMessages = messages.filter(m => m.role === 'user').length;
-  const freeChatLimit = 100;
+  const midnight = new Date();
+  midnight.setHours(0, 0, 0, 0);
+  const todayUserMessages = messages.filter(m => 
+    m.role === 'user' && 
+    m.createdAt && 
+    new Date(m.createdAt) >= midnight
+  ).length;
+  const freeChatLimit = 5;
   const freeChatRemaining = Math.max(0, freeChatLimit - todayUserMessages);
   const freeChatBlocked = isFree && freeChatRemaining <= 0;
 
   useEffect(() => {
-    if (dbMessages) setMessages(dbMessages.map(m => ({ id: m.id, role: m.role, content: m.content })));
+    if (dbMessages) setMessages(dbMessages.map(m => ({ id: m.id, role: m.role, content: m.content, createdAt: m.createdAt })));
   }, [dbMessages]);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, isLoading]);
@@ -150,7 +157,7 @@ export default function AIChat() {
     setIsLoading(true);
     
     // Add user message optimistically to the local state so the user sees it immediately
-    setMessages(prev => [...prev, { id: Date.now(), role: 'user', content: text }]);
+    setMessages(prev => [...prev, { id: Date.now(), role: 'user', content: text, createdAt: new Date() }]);
     
     sendMessage.mutate(
       { content: text },

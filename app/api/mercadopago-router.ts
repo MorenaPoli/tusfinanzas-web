@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
+import crypto from "crypto";
 import { createRouter, authedQuery, publicQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import { subscriptions } from "@db/schema";
@@ -84,7 +85,7 @@ async function createSubscription(
       // URL a donde MP redirige al usuario tras autorizar el débito
       back_url: `${origin}/payment/success`,
       // Datos del pagador
-      payer_email: email === "policoding@gmail.com" ? "test_user_1202636372@testuser.com" : (email || `usuario${userId}@tusfinanzas.app`),
+      payer_email: email || `usuario${userId}@tusfinanzas.app`,
       // Configuración del cobro automático recurrente
       auto_recurring: {
         frequency,
@@ -172,11 +173,56 @@ export const mercadoPagoRouter = createRouter({
         "data.id": z.string().optional(),
       }).optional()
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const topic = input?.topic || input?.type;
       const resourceId = input?.["data.id"] || input?.id;
 
       if (!resourceId) return { received: true };
+
+      // Webhook Signature Verification
+      const webhookSecret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
+      if (webhookSecret) {
+        const xSignature = ctx.req.headers.get("x-signature") || "";
+        const xRequestId = ctx.req.headers.get("x-request-id") || "";
+
+        let ts = "";
+        let v1 = "";
+        const parts = xSignature.split(",");
+        for (const part of parts) {
+          const [key, value] = part.split("=");
+          if (key && value) {
+            const k = key.trim();
+            const v = value.trim();
+            if (k === "ts") {
+              ts = v;
+            } else if (k === "v1") {
+              v1 = v;
+            }
+          }
+        }
+
+        if (!ts || !v1 || !xRequestId) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Missing signature components or request ID",
+          });
+        }
+
+        const manifest = `id:${resourceId};request-id:${xRequestId};ts:${ts};`;
+        const computedHash = crypto
+          .createHmac("sha256", webhookSecret)
+          .update(manifest)
+          .digest("hex");
+
+        if (computedHash !== v1) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Invalid webhook signature",
+          });
+        }
+      } else {
+        console.warn("MERCADOPAGO_WEBHOOK_SECRET is not set. Skipping signature validation.");
+      }
 
       try {
         if (topic === "payment") {

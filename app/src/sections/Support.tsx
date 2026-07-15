@@ -201,7 +201,7 @@ export default function Support() {
           {[
             { icon: HelpCircle, label: 'Cómo empezar', action: () => navigate('/dashboard') },
             { icon: Lightbulb, label: 'Consejos de ahorro', action: () => navigate('/chat') },
-            { icon: Bug, label: 'Reportar un problema', action: () => navigate('/chat') },
+            { icon: Bug, label: 'Reportar un problema', action: () => { setShowForm(true); setSubject("Reporte de error: "); } },
             { icon: MessageCircle, label: 'Preguntar a la IA', action: () => navigate('/chat') },
           ].map((item) => (
             <button key={item.label} onClick={item.action}
