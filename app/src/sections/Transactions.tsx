@@ -434,29 +434,38 @@ export default function Transactions() {
                         </div>
                         <div>
                           <p className="text-sm font-medium">{t.description || t.category}</p>
-                          <p className="text-[10px] text-white/30">{dateStr} · {t.category}</p>
+                          <p className="text-[10px] text-white/30">
+                            {dateStr} · {t.category}
+                            {t.isOfflinePending && (
+                              <span className="ml-2 px-1.5 py-0.5 rounded bg-[#FFD166]/10 text-[#FFD166] text-[8px] font-bold tracking-wider uppercase animate-pulse border border-[#FFD166]/20">
+                                Pendiente
+                              </span>
+                            )}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
                         <p className={`text-sm font-bold ${t.type === 'income' || t.type === 'asset' ? 'text-[#00E5FF]' : 'text-[#FF4D6A]'}`}>
                           {t.type === 'income' || t.type === 'asset' ? '+' : '-'}${parseFloat(t.amount).toLocaleString()} <span className="text-[10px] opacity-60 ml-0.5">{(t as any).currency || 'USD'}</span>
                         </p>
-                        {deleteConfirm === t.id ? (
-                          <div className="flex items-center gap-1">
-                            <button onClick={() => { deleteTx.mutate({ id: t.id }); setDeleteConfirm(null); }}
-                              className="px-2 py-1 rounded-lg bg-[#FF4D6A]/20 text-[#FF4D6A] text-[10px] font-semibold hover:bg-[#FF4D6A]/30 transition-colors">
-                              Confirmar
+                        {!t.isOfflinePending && (
+                          deleteConfirm === t.id ? (
+                            <div className="flex items-center gap-1">
+                              <button onClick={() => { deleteTx.mutate({ id: t.id }); setDeleteConfirm(null); }}
+                                className="px-2 py-1 rounded-lg bg-[#FF4D6A]/20 text-[#FF4D6A] text-[10px] font-semibold hover:bg-[#FF4D6A]/30 transition-colors">
+                                Confirmar
+                              </button>
+                              <button onClick={() => setDeleteConfirm(null)}
+                                className="px-2 py-1 rounded-lg bg-white/5 text-white/40 text-[10px] hover:bg-white/10 transition-colors">
+                                Cancelar
+                              </button>
+                            </div>
+                          ) : (
+                            <button onClick={() => setDeleteConfirm(t.id)}
+                              className="p-1.5 rounded-lg hover:bg-[#FF4D6A]/10 transition-colors">
+                              <Trash2 size={14} className="text-white/20 hover:text-[#FF4D6A]" />
                             </button>
-                            <button onClick={() => setDeleteConfirm(null)}
-                              className="px-2 py-1 rounded-lg bg-white/5 text-white/40 text-[10px] hover:bg-white/10 transition-colors">
-                              Cancelar
-                            </button>
-                          </div>
-                        ) : (
-                          <button onClick={() => setDeleteConfirm(t.id)}
-                            className="p-1.5 rounded-lg hover:bg-[#FF4D6A]/10 transition-colors">
-                            <Trash2 size={14} className="text-white/20 hover:text-[#FF4D6A]" />
-                          </button>
+                          )
                         )}
                       </div>
                     </motion.div>

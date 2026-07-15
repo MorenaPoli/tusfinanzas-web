@@ -22,8 +22,60 @@ export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const utils = trpc.useUtils();
+  const createTx = trpc.finance.createTransaction.useMutation();
+
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  // Sync offline queue when connection is restored
+  const syncOfflineQueue = async () => {
+    const queueRaw = localStorage.getItem('tusfinanzas_offline_queue');
+    if (!queueRaw) return;
+
+    try {
+      const queue = JSON.parse(queueRaw);
+      if (queue.length === 0) return;
+
+      const { toast } = await import('sonner');
+      const toastId = toast.loading(`Sincronizando ${queue.length} movimientos offline...`);
+
+      for (const tx of queue) {
+        await createTx.mutateAsync({
+          type: tx.type,
+          category: tx.category,
+          amount: tx.amount,
+          description: tx.description,
+          currency: tx.currency,
+          date: tx.date,
+        });
+      }
+
+      localStorage.removeItem('tusfinanzas_offline_queue');
+
+      // Refresh cache
+      utils.finance.listTransactions.invalidate();
+      utils.finance.getTotals.invalidate();
+
+      toast.success("¡Movimientos sincronizados con éxito!", { id: toastId });
+    } catch (err) {
+      console.error("Failed to sync offline queue:", err);
+    }
+  };
+
+  useEffect(() => {
+    const handleOnline = () => {
+      syncOfflineQueue();
+    };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [createTx, utils]);
+
+  useEffect(() => {
+    if (navigator.onLine) {
+      syncOfflineQueue();
+    }
+  }, []);
   const [tickerAssets, setTickerAssets] = useState([
     { symbol: 'BTC', price: 92450.50, change: 1.45 },
     { symbol: 'ETH', price: 3420.20, change: -0.85 },

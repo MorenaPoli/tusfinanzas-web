@@ -44,6 +44,46 @@ export default function AddTransaction() {
       setTimeout(() => setIsShaking(false), 500);
       return;
     }
+
+    if (!navigator.onLine) {
+      // Offline mode: queue the transaction locally
+      try {
+        const queueRaw = localStorage.getItem('tusfinanzas_offline_queue');
+        const queue = queueRaw ? JSON.parse(queueRaw) : [];
+        const offlineTx = {
+          id: Date.now(),
+          type,
+          category,
+          amount,
+          description: description || undefined,
+          currency,
+          date,
+          createdAt: new Date().toISOString()
+        };
+        queue.push(offlineTx);
+        localStorage.setItem('tusfinanzas_offline_queue', JSON.stringify(queue));
+
+        // Optimistically prepend to cached transactions list so it shows in Transactions list immediately
+        const cachedTxsRaw = localStorage.getItem('tusfinanzas_cached_transactions');
+        const cachedTxs = cachedTxsRaw ? JSON.parse(cachedTxsRaw) : [];
+        // Add offline pending flag for UX rendering
+        cachedTxs.unshift({ ...offlineTx, isOfflinePending: true });
+        localStorage.setItem('tusfinanzas_cached_transactions', JSON.stringify(cachedTxs));
+
+        // Toast feedback
+        import('sonner').then(({ toast }) => {
+          toast.success("Movimiento guardado localmente (Offline). Se sincronizará al recuperar señal.");
+        });
+
+        // Invalidate totals query in memory if possible
+        utils.finance.listTransactions.invalidate();
+        navigate('/dashboard');
+      } catch (err) {
+        console.error("Failed to save transaction offline:", err);
+      }
+      return;
+    }
+
     create.mutate({ type, category, amount, description: description || undefined, currency, date });
   };
 

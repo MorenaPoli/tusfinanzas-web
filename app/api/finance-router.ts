@@ -506,11 +506,13 @@ El consejo debe ser muy específico e inteligente, adaptado a su país y sus nú
     const db = getDb();
     const userId = ctx.user.id;
 
-    return db
+    const list = await db
       .select()
       .from(chatMessages)
       .where(eq(chatMessages.userId, userId))
-      .orderBy(chatMessages.createdAt);
+      .orderBy(desc(chatMessages.createdAt))
+      .limit(50);
+    return list.reverse();
   }),
 
   createChatMessage: authedQuery
