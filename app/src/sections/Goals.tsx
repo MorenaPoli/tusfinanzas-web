@@ -47,7 +47,7 @@ export default function Goals() {
   }, [transactions]);
 
   const createGoal = trpc.goals.create.useMutation({
-    onSuccess: () => { utils.goals.list.invalidate(); setShowForm(false); },
+    onSuccess: () => { utils.goals.list.invalidate(); setShowForm(false); setShowKeypad(false); },
   });
   const deleteGoal = trpc.goals.delete.useMutation({
     onSuccess: () => utils.goals.list.invalidate(),
@@ -255,7 +255,8 @@ export default function Goals() {
             </motion.button>
 
             {goals?.map((g, i) => {
-              const pct = Math.min(100, (parseFloat(g.currentAmount) / parseFloat(g.targetAmount)) * 100);
+              const target = parseFloat(g.targetAmount);
+              const pct = target > 0 ? Math.min(100, (parseFloat(g.currentAmount) / target) * 100) : 0;
               return (
                 <motion.div key={g.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
                   className="p-5 rounded-2xl glass-card border border-white/[0.04]">

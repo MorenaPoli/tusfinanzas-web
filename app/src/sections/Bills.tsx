@@ -72,11 +72,11 @@ export default function Bills() {
   // Map bills to days
   const billsMap = new Map<number, typeof billsList>();
   for (const b of billsList) {
-    const d = new Date(b.dueDate);
-    if (d.getFullYear() === year && d.getMonth() === month) {
-      const dateNum = d.getDate();
-      if (!billsMap.has(dateNum)) billsMap.set(dateNum, []);
-      billsMap.get(dateNum)!.push(b);
+    const rawDateStr = b.dueDate instanceof Date ? b.dueDate.toISOString().slice(0, 10) : String(b.dueDate).slice(0, 10);
+    const [bYear, bMonth, bDay] = rawDateStr.split('-').map(Number);
+    if (bYear === year && bMonth - 1 === month) {
+      if (!billsMap.has(bDay)) billsMap.set(bDay, []);
+      billsMap.get(bDay)!.push(b);
     }
   }
 

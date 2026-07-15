@@ -35,7 +35,7 @@ export default function Profile() {
   const { data: portfolio } = trpc.finance.getPortfolio.useQuery();
   const { data: transactions = [] } = trpc.finance.listTransactions.useQuery();
   const { data: bills = [] } = trpc.bills.listBills.useQuery();
-  const { data: sessions = [] } = trpc.auth.listSessions.useQuery();
+  const { data: sessions = [], isLoading: sessionsLoading } = trpc.auth.listSessions.useQuery();
 
   const achievements = useMemo(() => {
     const hasGoals = goals.length > 0;
@@ -354,8 +354,10 @@ export default function Profile() {
             <Shield size={14} className="text-[#FF2D92]" /> Historial de Sesiones Activas
           </h5>
           <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-            {sessions.length === 0 ? (
-              <p className="text-xs text-white/20">Cargando historial de sesiones...</p>
+            {sessionsLoading ? (
+              <p className="text-xs text-white/20">Cargando historial...</p>
+            ) : sessions.length === 0 ? (
+              <p className="text-xs text-white/20">No hay sesiones registradas aún.</p>
             ) : (
               sessions.map((s) => {
                 const ua = s.userAgent.toLowerCase();

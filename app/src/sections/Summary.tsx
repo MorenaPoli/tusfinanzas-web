@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router'
 import { ArrowLeft, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, PiggyBank, Download } from 'lucide-react'
 import { trpc } from '@/providers/trpc'
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts'
 import { motion } from 'framer-motion'
 
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -66,7 +66,7 @@ export default function Summary() {
       const d = new Date();
       d.setDate(1);
       d.setMonth(d.getMonth() - i);
-      const m = d.toISOString().slice(0, 7);
+      const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       const txs = transactions.filter(t => {
         const dVal = t.date instanceof Date ? t.date.toISOString().slice(0, 10) : String(t.date);
         return dVal.startsWith(m);
@@ -87,7 +87,7 @@ export default function Summary() {
     setSelectedMonth(d.toISOString().slice(0, 7));
   };
 
-  const monthLabel = new Date(selectedMonth + '-01').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+  const monthLabel = new Date(selectedMonth + '-02T00:00:00').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
 
   return (
     <div className="max-w-lg mx-auto px-6 pt-6">
@@ -172,7 +172,7 @@ export default function Summary() {
           {/* Trend Chart */}
           {monthData.trend.some(d => d.income > 0 || d.expense > 0) && (
             <div className="p-4 rounded-2xl bg-[#1A1A1A] border border-white/[0.06]">
-              <p className="text-xs text-white/40 mb-3">Tendencia ultimos 6 meses</p>
+              <p className="text-xs text-white/40 mb-3">Tendencia últimos 12 meses</p>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={monthData.trend}>
                   <XAxis dataKey="month" tick={{ fill: '#666', fontSize: 10 }} axisLine={false} tickLine={false} />

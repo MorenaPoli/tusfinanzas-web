@@ -23,7 +23,7 @@ export const notificationRouter = createRouter({
       const db = getDb();
       const userId = user.id;
 
-      if (input.id) {
+      if (input.id !== undefined && input.id !== null) {
         await db
           .update(notifications)
           .set({ isRead: 1 })

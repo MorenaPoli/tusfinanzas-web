@@ -33,40 +33,36 @@ if (env.isProduction) {
     const migrations = [
       // Add lastSignInAt to users if missing
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS lastSignInAt DATETIME`,
-      // Create userSessions table
-      `CREATE TABLE IF NOT EXISTS userSessions (
+      // Create user_sessions table (matches Drizzle schema table name)
+      `CREATE TABLE IF NOT EXISTS user_sessions (
         id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        userId INT UNSIGNED NOT NULL,
-        ipAddress VARCHAR(128) NOT NULL DEFAULT '',
+        userId BIGINT UNSIGNED NOT NULL,
+        ipAddress VARCHAR(45) NOT NULL DEFAULT '',
         userAgent TEXT NOT NULL,
         createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_userSessions_userId (userId)
+        INDEX idx_user_sessions_userId (userId)
       )`,
       // Create bills table
       `CREATE TABLE IF NOT EXISTS bills (
         id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        userId INT UNSIGNED NOT NULL,
+        userId BIGINT UNSIGNED NOT NULL,
         name VARCHAR(255) NOT NULL,
         amount DECIMAL(15,2) NOT NULL DEFAULT 0,
-        currency VARCHAR(10) NOT NULL DEFAULT 'USD',
-        dueDate DATE NOT NULL,
-        isPaid TINYINT(1) NOT NULL DEFAULT 0,
+        dueDate DATETIME NOT NULL,
+        isPaid BIGINT NOT NULL DEFAULT 0,
         category VARCHAR(100) NOT NULL DEFAULT 'Servicios',
-        notes TEXT,
         createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         INDEX idx_bills_userId (userId)
       )`,
-      // Create userInvestments table
-      `CREATE TABLE IF NOT EXISTS userInvestments (
+      // Create user_investments table (matches Drizzle schema: symbol, avgPrice, no name)
+      `CREATE TABLE IF NOT EXISTS user_investments (
         id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        userId INT UNSIGNED NOT NULL,
-        ticker VARCHAR(20) NOT NULL,
-        name VARCHAR(255) NOT NULL,
-        shares DECIMAL(18,8) NOT NULL DEFAULT 0,
-        avgCost DECIMAL(18,8) NOT NULL DEFAULT 0,
-        createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        userId BIGINT UNSIGNED NOT NULL,
+        symbol VARCHAR(50) NOT NULL,
+        shares DECIMAL(15,4) NOT NULL DEFAULT 0,
+        avgPrice DECIMAL(15,2) NOT NULL DEFAULT 0,
         updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_userInvestments_userId (userId)
+        INDEX idx_user_investments_userId (userId)
       )`,
     ];
 

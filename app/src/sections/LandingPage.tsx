@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router';
 import { useEffect, useRef, useState } from 'react';
-import { motion, useInView } from 'framer-motion';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
 import {
   Smartphone, Brain,
   CreditCard, PiggyBank, BarChart3, Lock, Bell,
@@ -545,11 +545,19 @@ export default function LandingPage() {
                     <span className="text-sm font-medium pr-4">{faq.q}</span>
                     <ChevronDown size={16} className={`text-white/30 shrink-0 transition-transform ${openFaq === i ? 'rotate-180' : ''}`} />
                   </button>
+                  <AnimatePresence>
                   {openFaq === i && (
-                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="px-4 pb-4">
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="px-4 pb-4"
+                    >
                       <p className="text-xs text-white/50 leading-relaxed">{faq.a}</p>
                     </motion.div>
                   )}
+                  </AnimatePresence>
                 </div>
               </Reveal>
             ))}
@@ -617,7 +625,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="border-t border-white/[0.06] pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-[10px] text-white/20"> 2025 Tus Finanzas. Todos los derechos reservados.</p>
+            <p className="text-[10px] text-white/20"> {new Date().getFullYear()} Tus Finanzas. Todos los derechos reservados.</p>
             <div className="flex items-center gap-4">
               <a href="#" className="text-[10px] text-white/20 hover:text-white/40 transition-colors">Terminos</a>
               <a href="#" className="text-[10px] text-white/20 hover:text-white/40 transition-colors">Privacidad</a>

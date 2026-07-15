@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { createRouter, authedQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import { transactions, dailyQuotes, chatMessages, subscriptions, savingsGoals, familyMemberships, notifications, userInvestments } from "@db/schema";
@@ -256,7 +257,7 @@ export const financeRouter = createRouter({
         throw new Error("Transaction not found");
       }
 
-      await db.delete(transactions).where(eq(transactions.id, input.id));
+      await db.delete(transactions).where(and(eq(transactions.id, input.id), eq(transactions.userId, userId)));
 
       return { success: true };
     }),
@@ -956,7 +957,7 @@ ${input.rows.map((r, i) => `Índice ${i}: "${r.description}" (monto: ${r.amount}
   }),
 
   buyAsset: authedQuery
-    .input(z.object({ symbol: z.string(), shares: z.number(), price: z.number() }))
+    .input(z.object({ symbol: z.string().min(1), shares: z.number().positive(), price: z.number().positive() }))
     .mutation(async ({ ctx, input }) => {
       const db = getDb();
       const userId = ctx.user.id;
@@ -969,7 +970,7 @@ ${input.rows.map((r, i) => `Índice ${i}: "${r.description}" (monto: ${r.amount}
 
       const currentCash = cashRow ? parseFloat(cashRow.shares) : 100000;
       if (currentCash < totalCost) {
-        throw new Error("Saldo de efectivo virtual insuficiente.");
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Saldo de efectivo virtual insuficiente.' });
       }
 
       const newCashVal = (currentCash - totalCost).toFixed(4);
@@ -1018,7 +1019,7 @@ ${input.rows.map((r, i) => `Índice ${i}: "${r.description}" (monto: ${r.amount}
     }),
 
   sellAsset: authedQuery
-    .input(z.object({ symbol: z.string(), shares: z.number(), price: z.number() }))
+    .input(z.object({ symbol: z.string().min(1), shares: z.number().positive(), price: z.number().positive() }))
     .mutation(async ({ ctx, input }) => {
       const db = getDb();
       const userId = ctx.user.id;
@@ -1030,7 +1031,7 @@ ${input.rows.map((r, i) => `Índice ${i}: "${r.description}" (monto: ${r.amount}
         .where(and(eq(userInvestments.userId, userId), eq(userInvestments.symbol, input.symbol)));
 
       if (!existing || parseFloat(existing.shares) < input.shares) {
-        throw new Error("No tienes suficientes acciones/unidades para vender.");
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'No tienes suficientes acciones/unidades para vender.' });
       }
 
       const existingShares = parseFloat(existing.shares);

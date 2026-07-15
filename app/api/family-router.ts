@@ -109,7 +109,8 @@ export const familyRouter = createRouter({
       }
 
       // 3. Create family group
-      const code = "FAM-" + Math.random().toString(36).substring(2, 8).toUpperCase();
+      const { randomBytes } = await import("crypto");
+      const code = "FAM-" + randomBytes(4).toString("hex").toUpperCase();
       const insertResult = await db.insert(familyGroups).values({
         name: input.name,
         code,

@@ -16,8 +16,12 @@ export default function Transactions() {
   const { data: transactions, isLoading } = trpc.finance.listTransactions.useQuery();
 
   const [cachedTransactions, setCachedTransactions] = useState<any[]>(() => {
-    const cached = localStorage.getItem('tusfinanzas_cached_transactions');
-    return cached ? JSON.parse(cached) : [];
+    try {
+      const cached = localStorage.getItem('tusfinanzas_cached_transactions');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
   });
 
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
@@ -83,6 +87,7 @@ export default function Transactions() {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) processCsvFile(file);
+    if (e.target) e.target.value = '';
   };
 
   const processCsvFile = (file: File) => {
@@ -288,6 +293,7 @@ export default function Transactions() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url); // prevent memory leak
   };
 
   return (

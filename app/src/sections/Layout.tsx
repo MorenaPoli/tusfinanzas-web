@@ -34,14 +34,21 @@ export default function Layout() {
   ]);
 
   useEffect(() => {
+    let rafId: number | null = null;
     const handleMouseMove = (e: MouseEvent) => {
-      const x = (e.clientX / window.innerWidth - 0.5) * 50; // Max 50px shift
-      const y = (e.clientY / window.innerHeight - 0.5) * 50;
-      setMousePos({ x, y });
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        const x = (e.clientX / window.innerWidth - 0.5) * 50;
+        const y = (e.clientY / window.innerHeight - 0.5) * 50;
+        setMousePos({ x, y });
+        rafId = null;
+      });
     };
-
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
   }, []);
 
   useEffect(() => {
@@ -53,7 +60,7 @@ export default function Layout() {
         return {
           ...asset,
           price: newPrice,
-          change: asset.change + changeDiff,
+          change: Math.max(-99, Math.min(99, asset.change + changeDiff)),
         };
       }));
     }, 4000);

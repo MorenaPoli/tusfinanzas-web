@@ -74,6 +74,7 @@ export const budgetRouter = createRouter({
     // Calculate actual expenses for the current month
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
     const startStr = startOfMonth.toISOString().slice(0, 10);
 
     const actuals = await db
@@ -202,6 +203,7 @@ export async function checkBudgetThresholds(db: any, userId: number, category: s
   // 2. Calculate actual expenses for the current month
   const startOfMonth = new Date();
   startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
   const startStr = startOfMonth.toISOString().slice(0, 10);
 
   const [actual] = await db

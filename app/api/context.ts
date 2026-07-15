@@ -23,11 +23,21 @@ export async function createContext(
       if (decoded) {
         const db = getDb();
         const userList = await db
-          .select()
+          .select({
+            id: users.id,
+            email: users.email,
+            name: users.name,
+            country: users.country,
+            role: users.role,
+            avatar: users.avatar,
+            createdAt: users.createdAt,
+            updatedAt: users.updatedAt,
+            lastSignInAt: users.lastSignInAt,
+          })
           .from(users)
           .where(eq(users.id, decoded.userId));
         if (userList.length > 0) {
-          ctx.user = userList[0];
+          ctx.user = userList[0] as any;
         }
       }
     }

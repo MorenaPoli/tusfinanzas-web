@@ -12,6 +12,14 @@ import MiniKeypad from '@/components/MiniKeypad'
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
 
+const TYPE_COLORS: Record<string, string> = {
+  income: '#00E5FF', expense: '#FF4D6A', investment: '#6366F1', debt: '#EF4444', asset: '#8B5CF6',
+};
+
+const TYPE_BG: Record<string, string> = {
+  income: 'rgba(0,229,255,0.12)', expense: 'rgba(255,77,106,0.12)', investment: 'rgba(99,102,241,0.12)', debt: 'rgba(239,68,68,0.10)', asset: 'rgba(139,92,246,0.12)',
+};
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -26,13 +34,21 @@ export default function Dashboard() {
 
   // Local cache fallbacks
   const [cachedTotals, setCachedTotals] = useState<any>(() => {
-    const cached = localStorage.getItem('tusfinanzas_cached_totals');
-    return cached ? JSON.parse(cached) : { income: 0, expense: 0, capital: 0, netWorth: 0, asset: 0, debt: 0, investment: 0 };
+    try {
+      const cached = localStorage.getItem('tusfinanzas_cached_totals');
+      return cached ? JSON.parse(cached) : { income: 0, expense: 0, capital: 0, netWorth: 0, asset: 0, debt: 0, investment: 0 };
+    } catch {
+      return { income: 0, expense: 0, capital: 0, netWorth: 0, asset: 0, debt: 0, investment: 0 };
+    }
   });
 
   const [cachedTransactions, setCachedTransactions] = useState<any[]>(() => {
-    const cached = localStorage.getItem('tusfinanzas_cached_transactions');
-    return cached ? JSON.parse(cached) : [];
+    try {
+      const cached = localStorage.getItem('tusfinanzas_cached_transactions');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
   });
 
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
@@ -669,10 +685,4 @@ export default function Dashboard() {
   );
 }
 
-const TYPE_COLORS: Record<string, string> = {
-  income: '#00E5FF', expense: '#FF4D6A', investment: '#6366F1', debt: '#EF4444', asset: '#8B5CF6',
-};
 
-const TYPE_BG: Record<string, string> = {
-  income: 'rgba(0,229,255,0.12)', expense: 'rgba(255,77,106,0.12)', investment: 'rgba(99,102,241,0.12)', debt: 'rgba(239,68,68,0.10)', asset: 'rgba(139,92,246,0.12)',
-};

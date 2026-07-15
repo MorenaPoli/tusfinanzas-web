@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { createRouter, authedQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import { bills, transactions, notifications } from "@db/schema";
@@ -21,7 +22,7 @@ export const billsRouter = createRouter({
       z.object({
         name: z.string().min(1).max(255),
         amount: z.string().min(1),
-        dueDate: z.string(),
+        dueDate: z.string().refine(v => !isNaN(Date.parse(v)), { message: 'Fecha inválida' }),
         category: z.string().min(1).max(100),
       })
     )
@@ -54,14 +55,19 @@ export const billsRouter = createRouter({
         .where(and(eq(bills.id, input.id), eq(bills.userId, userId)));
 
       if (!bill) {
-        throw new Error("Bill not found");
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Bill not found' });
+      }
+
+      // Guard: don't double-pay
+      if (bill.isPaid === 1) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Esta factura ya fue pagada.' });
       }
 
       // 2. Mark the bill as paid (isPaid = 1)
       await db
         .update(bills)
         .set({ isPaid: 1 })
-        .where(eq(bills.id, input.id));
+        .where(and(eq(bills.id, input.id), eq(bills.userId, userId)));
 
       // 3. Automatically insert a matching transaction of type 'expense'
       const txResult = await db.insert(transactions).values({

@@ -56,7 +56,8 @@ export const localAuthRouter = createRouter({
       const token = signToken(userId, input.email, "user");
 
       // Log session creation
-      const ipAddress = ctx.req.headers.get("x-forwarded-for") || "127.0.0.1";
+      const rawIp = ctx.req.headers.get("x-forwarded-for") || "127.0.0.1";
+      const ipAddress = rawIp.split(",")[0].trim().slice(0, 45);
       const userAgent = ctx.req.headers.get("user-agent") || "Desconocido";
       await db.insert(userSessions).values({
         userId,
@@ -93,7 +94,8 @@ export const localAuthRouter = createRouter({
       const token = signToken(user.id, user.email, user.role);
 
       // Log session creation
-      const ipAddress = ctx.req.headers.get("x-forwarded-for") || "127.0.0.1";
+      const rawIp = ctx.req.headers.get("x-forwarded-for") || "127.0.0.1";
+      const ipAddress = rawIp.split(",")[0].trim().slice(0, 45);
       const userAgent = ctx.req.headers.get("user-agent") || "Desconocido";
       await db.insert(userSessions).values({
         userId: user.id,

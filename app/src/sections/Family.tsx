@@ -102,16 +102,22 @@ export default function Family() {
     e.preventDefault();
     if (!familyName.trim()) return;
     setActionLoading(true);
-    await createFamily.mutateAsync({ name: familyName });
-    setActionLoading(false);
+    try {
+      await createFamily.mutateAsync({ name: familyName });
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!familyCode.trim()) return;
     setActionLoading(true);
-    await joinFamily.mutateAsync({ code: familyCode });
-    setActionLoading(false);
+    try {
+      await joinFamily.mutateAsync({ code: familyCode });
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const handleCopy = () => {
