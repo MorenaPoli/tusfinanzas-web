@@ -89,36 +89,42 @@ export default function LandingPage() {
       role: 'Contadora, Buenos Aires',
       text: 'En 3 meses pude ver donde se me iba la plata. Me di cuenta que gastaba $800 solo en delivery. La IA me dio un plan concreto y ahora ahorro el 20% de mi sueldo.',
       stars: 5,
+      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80',
     },
     {
       name: 'Carlos R.',
       role: 'Desarrollador, Mexico DF',
       text: 'Probe YNAB y era demasiado complejo. Tus Finanzas es directo: cargo mis gastos, veo mis graficos y el experto me dice que hacer. Por $4.99 esta regalado.',
       stars: 5,
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80',
     },
     {
       name: 'Lucia M.',
       role: 'Emprendedora, Montevideo',
       text: 'Tenia deuda en 3 tarjetas y no sabia por cual empezar. El experto me dio el plan exacto: pague la mas cara primero y en 8 meses sali de deuda.',
       stars: 5,
+      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120&auto=format&fit=crop&q=80',
     },
     {
       name: 'Andres P.',
       role: 'Estudiante, Santiago',
       text: 'Uso la version gratis y con 30 transacciones al mes me alcanza perfecto. Cuando empiece a trabajar de seguro me paso al Pro por la IA.',
       stars: 4,
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80',
     },
     {
       name: 'Sofia L.',
       role: 'Marketing Manager, Madrid',
       text: 'La frase del dia me mantiene enfocada. Cuando veo que mi patrimonio crece, me motiva a seguir ahorrando. Es simple pero efectivo.',
       stars: 5,
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
     },
     {
       name: 'Juan D.',
       role: 'Ingeniero, Bogota',
       text: 'Le pregunte al experto como invertir $500 y me dio tickers reales con precios exactos. Compre VTI y VXUS siguiendo sus instrucciones. Ahora tengo un portfolio.',
       stars: 5,
+      avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=120&auto=format&fit=crop&q=80',
     },
   ];
 
@@ -202,9 +208,14 @@ export default function LandingPage() {
 
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
                 className="flex items-center gap-4 text-xs text-white/30">
-                <div className="flex -space-x-2">
-                  {[1,2,3,4].map((i) => (
-                    <img key={i} src="/logo.jpg" alt="" className="w-8 h-8 rounded-full object-cover border-2 border-[#0A0A0A] opacity-70" />
+                 <div className="flex -space-x-2">
+                  {[
+                    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop&q=80',
+                    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&auto=format&fit=crop&q=80',
+                    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&auto=format&fit=crop&q=80',
+                    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&auto=format&fit=crop&q=80'
+                  ].map((url, idx) => (
+                    <img key={idx} src={url} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-[#0A0A0A] opacity-80" />
                   ))}
                 </div>
                 <span>+2.400 personas ya lo usan</span>
@@ -218,7 +229,7 @@ export default function LandingPage() {
                 <div className="w-full h-full bg-[#0A0A0A] rounded-[32px] overflow-hidden p-5">
                   <div className="flex items-center justify-between mb-4">
                     <span className="font-bold text-sm">Tus Finanzas</span>
-                    <img src="/logo.jpg" alt="" className="w-6 h-6 rounded-full object-cover" />
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop&q=80" alt="" className="w-6 h-6 rounded-full object-cover" />
                   </div>
                   <p className="text-[9px] text-white/30 uppercase mb-1">Patrimonio Neto</p>
                   <p className="text-3xl font-extrabold mb-4">$24,580</p>
@@ -326,8 +337,9 @@ export default function LandingPage() {
             {steps.map((s, i) => (
               <Reveal key={s.num} delay={i * 0.1}>
                 <div className="relative p-6 rounded-2xl bg-[#111] border border-white/[0.06] text-center h-full">
-                  <span className="text-4xl font-extrabold text-white/[0.06] absolute top-4 right-4">{s.num}</span>
-                  <img src="/logo.jpg" alt="" className="w-14 h-14 rounded-full object-cover mx-auto mb-4 shadow-[0_4px_20px_rgba(255,45,146,0.3)]" />
+                   <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#FF2D92]/20 to-[#8B5CF6]/20 border border-white/[0.08] flex items-center justify-center mx-auto mb-4 shadow-[0_4px_20px_rgba(255,45,146,0.15)]">
+                    <span className="text-lg font-black bg-gradient-to-r from-[#FF2D92] to-[#8B5CF6] bg-clip-text text-transparent">{s.num}</span>
+                  </div>
                   <h3 className="font-semibold text-base mb-2">{s.title}</h3>
                   <p className="text-sm text-white/40 leading-relaxed">{s.desc}</p>
                 </div>
@@ -361,7 +373,7 @@ export default function LandingPage() {
                     ))}
                   </div>
                   <div className="flex items-center gap-3">
-                    <img src="/logo.jpg" alt={t.name} className="w-9 h-9 rounded-full object-cover" />
+                    <img src={t.avatar} alt={t.name} className="w-9 h-9 rounded-full object-cover" />
                     <div>
                       <p className="text-sm font-medium">{t.name}</p>
                       <p className="text-[10px] text-white/30">{t.role}</p>

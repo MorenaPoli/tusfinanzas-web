@@ -70,6 +70,7 @@ export default function Quotes() {
       refetchPortfolio();
       setSelectedAsset(null);
       setTradeShares('1');
+      setShowKeypad(false);
     },
     onError: (err) => {
       alert(err.message || 'Error al comprar.');
@@ -81,6 +82,7 @@ export default function Quotes() {
       refetchPortfolio();
       setSelectedAsset(null);
       setTradeShares('1');
+      setShowKeypad(false);
     },
     onError: (err) => {
       alert(err.message || 'Error al vender.');
@@ -147,20 +149,27 @@ export default function Quotes() {
     const newAllocations = { ...allocations, [symbol]: parsed };
     const otherSymbols = Object.keys(newAllocations).filter(s => s !== symbol);
 
-    const sumOthers = otherSymbols.reduce((sum, s) => sum + newAllocations[s], 0);
+    const remaining = 100 - parsed;
+    const sumOthers = otherSymbols.reduce((sum, s) => sum + allocations[s], 0);
+
     if (sumOthers > 0) {
-      const remaining = 100 - parsed;
-      if (remaining >= 0) {
-        otherSymbols.forEach(s => {
-          newAllocations[s] = Math.round((allocations[s] / sumOthers) * remaining);
-        });
-        const currentTotal = Object.values(newAllocations).reduce((sum, v) => sum + v, 0);
-        const error = 100 - currentTotal;
-        if (error !== 0 && otherSymbols.length > 0) {
-          newAllocations[otherSymbols[0]] = Math.max(0, newAllocations[otherSymbols[0]] + error);
-        }
-      }
+      otherSymbols.forEach(s => {
+        newAllocations[s] = Math.round((allocations[s] / sumOthers) * remaining);
+      });
+    } else if (otherSymbols.length > 0) {
+      const share = Math.floor(remaining / otherSymbols.length);
+      otherSymbols.forEach(s => {
+        newAllocations[s] = share;
+      });
     }
+
+    // Rounding adjustment
+    const currentTotal = Object.values(newAllocations).reduce((sum, v) => sum + v, 0);
+    const error = 100 - currentTotal;
+    if (error !== 0 && otherSymbols.length > 0) {
+      newAllocations[otherSymbols[0]] = Math.max(0, newAllocations[otherSymbols[0]] + error);
+    }
+
     setAllocations(newAllocations);
   };
 
@@ -580,7 +589,7 @@ export default function Quotes() {
               className="w-full max-w-sm rounded-2xl glass-strong p-6 border border-white/[0.08] relative"
             >
               <button
-                onClick={() => setSelectedAsset(null)}
+                onClick={() => { setSelectedAsset(null); setShowKeypad(false); setTradeShares('1'); }}
                 className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-white/5 text-white/50 hover:text-white"
               >
                 <X size={16} />
